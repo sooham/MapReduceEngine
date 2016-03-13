@@ -3,6 +3,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
+#include "mapreduce.h"
+#include "linkedlist.h"
 
 
 /**
@@ -11,13 +14,34 @@
  * @param path the path to the directory.
  */
 void walk_directory(char *path){
+<<<<<<< .mine
+
+||||||| .r3
+	
+=======
     char *args[] = { path };
     execv("ls", args);
 
     // If the above call fails exit with status 1.
     exit(1);
+>>>>>>> .r4
 }
 
+<<<<<<< .mine
+/**
+ * A function to read in the command line args and set them appropriately.
+ * [-m numprocs] [-r numprocs] -d dirname
+ *
+ * do not assume dirname ends with a slash
+ */
+// int opterr - non zero, then getopt prints an error message
+//
+// int optopt - when getopt encounters an unknown option char or option
+// char, stores it here
+//
+// int optind
+||||||| .r3
+=======
 /**
  * Reads file names from stdin and distributes
  * them evenly to map workers
@@ -29,7 +53,17 @@ void process_files(){
         printf("%s", file_name); 
     }
 }
+>>>>>>> .r4
 
+<<<<<<< .mine
+/**
+ * error handling function
+ */
+
+
+
+||||||| .r3
+=======
 /**
  * Creates a walker worker and routes its
  * stdout to this process' stdin.
@@ -62,6 +96,7 @@ void create_walker_worker(char *path){
     }
 }
 
+>>>>>>> .r4
 int main(){
     char *path = "/Users/jcoc611/a3/group_0476/a3/texts";
     create_walker_worker(path);
