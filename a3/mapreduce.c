@@ -13,8 +13,8 @@
  * @param path the path to the directory.
  */
 void walk_directory(char *path){
-    char *args[] = { path };
-    execv("ls", args);
+    char *args[] = { "ls", path, NULL };
+    execvp("ls", args);
 
     // If the above call fails exit with status 1.
     exit(1);
@@ -40,8 +40,8 @@ void walk_directory(char *path){
 void process_files(){
     char file_name[MAX_FILENAME];
     // Just print for now
-    while(scanf("%s", &file_name) != EOF){
-        printf("%s", file_name); 
+    while(scanf("%s", file_name) != EOF){
+        printf("%s\n", file_name);
     }
 }
 
@@ -55,35 +55,40 @@ void process_files(){
  * Creates a walker worker and routes its
  * stdout to this process' stdin.
  */
-void create_walker_worker(char *path){
-    int f = fork();
-
+int create_walker_worker(char *path){
     // Create the walker->master pipe
     int walker_pipe[2];
-    if(pipe(mypipe)){
+    if(pipe(walker_pipe)){
         fprintf(stderr, "Walker Worker: pipe failed.\n");
         return EXIT_FAILURE;
     }
 
+    // Fork into walker worker
+    int f = fork();
     if(f == 0){
         // Child (walker worker)
         close(walker_pipe[0]);
-        dup2(walker_pipe[1], stdout);
+        dup2(walker_pipe[1], STDOUT_FILENO);
         walk_directory(path);
     }else if(f > 0){
         // Master, route child stdout to stdin
         close(walker_pipe[1]);
-        dup2(walker_pipe[0], stdin);
+        dup2(walker_pipe[0], STDIN_FILENO);
+
         // Read stdin for filenames, send to map workers.
-        process_files()
+        process_files();
     }else{
         // ERROR
         fprintf(stderr, "Walker Worker: fork failed.\n");
         exit(10);
     }
+
+    return 0;
 }
 
 int main(){
     char *path = "/Users/jcoc611/a3/group_0476/a3/texts";
     create_walker_worker(path);
+
+    return 0;
 }
