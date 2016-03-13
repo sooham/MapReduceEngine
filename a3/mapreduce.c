@@ -5,22 +5,29 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <stdarg.h>         // for variable args to function
 #include "mapreduce.h"
 
-/* Container for map reduce logistics */
-typedef struct mapReduceLogistics {
-    int num_map_workers;
-    int num_reduce_workers;
-    char file_dir[MAX_FILENAME];
-} MapReduceLogistics;
+/* printing to stderr conveniently in a varadic manner*/
+void error(char *msg, int count, ...) {
+    va_list vargs;
+    va_start(vargs, count);
 
+    char new_msg[strlen(msg) + 2];
+    strncpy(new_msg, msg, strlen(msg));
+    new_msg[sizeof(new_msg) - 2] = '\n';
+    new_msg[sizeof(new_msg) - 1]  ='\0';
+
+    vfprintf(stderr, new_msg, vargs);
+    va_end(vargs);
+}
 
 /**
  * Reads the filename of all files in a directory,
  * and writes them to stdout.
  * @param path the path to the directory.
  */
-void walk_directory(char *path){    
+void walk_directory(char *path){
     char *args[] = { "ls", path, NULL };
     execvp("ls", args);
 
@@ -47,40 +54,50 @@ void walk_directory(char *path){
 
 // TODO: Init result in a simpler way using c99 partial struct initializtion
 // TODO: naming members of struct MapReduceLogistics sucks, correct it
-// TODO: struct on stack on heap?
 MapReduceLogistics process(int argc, char *const *argv) {
-    MapReduceLogistics result = {
-        .num_map_workers = 2,
-        .file_dir = ""
+    MapReduceLogistics res = {
+        .nmapworkers = 2,               // TODO: Why magic numbers?
+        .nreduceworkers = 2,
+        .dirname = ""
     };
 
-    opterr = 0; // don't print to stderr if wrong arguments passed
-    int c;
-    // m::r::d: means m and r flags are optional, d is required
-    while ((c = getopt(argc, argv, "m::r::d:")) != -1) {
-        switch (c) {
+    int dflag = 0;
+    int throw_error = 0;
+
+    opterr = 0;
+    int output;
+
+    while ((output = getopt(argc, argv, "m:r:d:")) != -1) {
+        switch (output) {
             case 'm':
-                result.num_map_workers = strtol(optarg, NULL, 10);
+                res.nmapworkers = strtol(optarg, NULL, 10);
                 break;
             case 'r':
-                result.num_reduce_workers = strtol(optarg, NULL, 10);
+                res.nreduceworkers = strtol(optarg, NULL, 10);
                 break;
             case 'd':
-                strncpy(result.file_dir, optarg, sizeof(result.file_dir));
-                result.file_dir[sizeof(result.file_dir) - 1] = '\0';
+                dflag = 1;
+                strncpy(res.dirname, optarg, sizeof(res.dirname));
+                res.dirname[sizeof(res.dirname) - 1] = '\0';
                 break;
-            case '?':
             default:
-                // fall through case
-                printf("usage: mapreduce [-m nmapworkers] [-r nreduceworkers] -d dirname\n");
-                printf("\t-m nmapworkers: number of map processes (default 2)\n");
-                printf("\t-r nreduceworkers: number of reduce processes (default 2)\n");
-                printf("\t-d dirname: directory of files to map reduce\n");
-                exit(1);
+                throw_error = 1;
         }
     }
 
-    return result;
+    if (!dflag || optind != argc) {
+        throw_error = 1;
+    }
+
+    if (throw_error) {
+        error("usage: %s [-m nmapworkers] [-r nreduceworkers] -d dirname", 1, argv[0]);
+        error("\t-m nmapworkers: number of map processes (default 2)", 0);
+        error("\t-r nreduceworkers: number of reduce processes (default 2)", 0);
+        error("\t-d dirname: directory of files to map reduce", 0);
+        exit(1);
+    }
+
+    return res;
 }
 
 
@@ -99,13 +116,13 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
     // Just print for now
     while(scanf("%s", file_name) != EOF){
         // Send to worker
-        
+
         write(
             out_pipes[current_worker],
             path,
             path_length
         );
-        
+
         if(path[path_length - 1] != '/'){
             write(out_pipes[current_worker], "/", 1);
         }
@@ -182,7 +199,7 @@ void map_digest_file(char *path){
         fprintf(stderr, "Map Worker: can't open file '%s'", path);
         exit(1);
     }
-    
+
     size_t chunkSize;
     do {
         chunkSize = fread(chunk, sizeof(char), READSIZE, map_file);

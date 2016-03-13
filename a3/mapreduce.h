@@ -33,6 +33,14 @@ typedef struct keyValues {
     struct keyValues *next;
 } LLKeyValues;
 
+// Container for map reduce worker logistics
+typedef struct mapReduceLogistics {
+    int nmapworkers;
+    int nreduceworkers;
+    char dirname[MAX_FILENAME];
+} MapReduceLogistics;
+
+
 
 /*
  * Takes a chunk of text and generates zero or more
