@@ -1,3 +1,11 @@
+// ~ ~ '
+// A Walk Worker outputs to stdout the file paths
+// to be read by Map Workers.
+// ~ ~ ,
+
+#include <unistd.h>
+#include <stdlib.h>
+
 /**
  * Reads the filename of all files in a directory,
  * and writes them to stdout.
