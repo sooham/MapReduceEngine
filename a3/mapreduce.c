@@ -6,6 +6,13 @@
 #include <errno.h>
 #include "mapreduce.h"
 
+/* Container for map reduce logistics */
+typedef struct mapReduceLogistics {
+    int num_map_workers;
+    int num_reduce_workers;
+    char file_dir[MAX_FILENAME];
+} MapReduceLogistics;
+
 
 /**
  * Reads the filename of all files in a directory,
@@ -31,7 +38,51 @@ void walk_directory(char *path){
 // int optopt - when getopt encounters an unknown option char or option
 // char, stores it here
 //
-// int optind
+// int optind - set by getopt to the index of the next element in argv array
+// to be processed after all option args processed
+//
+// char * optarg - set by getopt to point at the value of option arg, for
+// those that accept arguments
+
+// TODO: Init result in a simpler way using c99 partial struct initializtion
+// TODO: naming members of struct MapReduceLogistics sucks, correct it
+// TODO: struct on stack on heap?
+MapReduceLogistics process(int argc, char *const *argv) {
+    MapReduceLogistics result = {
+        .num_map_workers = 2,
+        .num_map_workers = 2,
+        .file_dir = ""
+    };
+
+    opterr = 0; // don't print to stderr if wrong arguments passed
+    int c;
+    // m::r::d: means m and r flags are optional, d is required
+    while ((c = getopt(argc, argv, "m::r::d:")) != -1) {
+        switch (c) {
+            case 'm':
+                result.num_map_workers = strtol(optarg, NULL, 10);
+                break;
+            case 'r':
+                result.num_reduce_workers = strtol(optarg, NULL, 10);
+                break;
+            case 'd':
+                strncpy(result.file_dir, optarg, sizeof(result.file_dir));
+                result.file_dir[sizeof(result.file_dir) - 1] = '\0';
+                break;
+            case '?':
+            default:
+                // fall through case
+                printf("usage: mapreduce [-m nmapworkers] [-r nreduceworkers] -d dirname\n");
+                printf("\t-m nmapworkers: number of map processes (default 2)\n");
+                printf("\t-r nreduceworkers: number of reduce processes (default 2)\n");
+                printf("\t-d dirname: directory of files to map reduce\n");
+                exit(1);
+        }
+    }
+
+    return result;
+}
+
 
 /**
  * Reads file names from stdin and distributes
