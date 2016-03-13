@@ -37,7 +37,7 @@ void walk_directory(char *path){
  * Reads file names from stdin and distributes
  * them evenly to map workers
  */
-void process_files(){
+void process_files(int pipe){
     char file_name[MAX_FILENAME];
     // Just print for now
     while(scanf("%s", file_name) != EOF){
@@ -60,7 +60,7 @@ int create_walker_worker(char *path){
     int walker_pipe[2];
     if(pipe(walker_pipe)){
         fprintf(stderr, "Walker Worker: pipe failed.\n");
-        return EXIT_FAILURE;
+        exit(10);
     }
 
     // Fork into walker worker
@@ -80,7 +80,7 @@ int create_walker_worker(char *path){
     }else{
         // ERROR
         fprintf(stderr, "Walker Worker: fork failed.\n");
-        exit(10);
+        exit(11);
     }
 
     return 0;
