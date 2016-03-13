@@ -19,7 +19,7 @@
 void map(const char *chunk, int outfd) {
     Pair pair = {"", "1"};
     int index = 0;
-    const char *cptr = value;
+    const char *cptr = chunk;
 
     // Get rid of any initial whitespace
     while (!isspace(*cptr)) {
@@ -70,6 +70,6 @@ Pair reduce(const char *key, const LLValues *head_value) {
     strncpy(pair.key, key, MAX_KEY);
     pair.key[MAX_KEY - 1] = '\0';
     strncpy(pair.value, buf, MAX_VALUE);
-    pair.key[MAX_VALUE - 1] = '\0';
+    pair.value[MAX_VALUE - 1] = '\0';
     return pair;
 }

@@ -20,7 +20,7 @@ typedef struct mapReduceLogistics {
  * and writes them to stdout.
  * @param path the path to the directory.
  */
-void walk_directory(char *path){
+void walk_directory(char *path){    
     char *args[] = { "ls", path, NULL };
     execvp("ls", args);
 
@@ -91,13 +91,25 @@ MapReduceLogistics process(int argc, char *const *argv) {
  * @param in_pipes  An array of mapper->master pipes.
  * @param out_pipes An array of master->mapper pipes.
  */
-void process_files(int m, int *in_pipes, int *out_pipes){
+void process_files(char *path, int m, int *in_pipes, int *out_pipes){
     int current_worker = 0;
 
     char file_name[MAX_FILENAME];
+    int path_length = strlen(path);
     // Just print for now
     while(scanf("%s", file_name) != EOF){
         // Send to worker
+        
+        write(
+            out_pipes[current_worker],
+            path,
+            path_length
+        );
+        
+        if(path[path_length - 1] != '/'){
+            write(out_pipes[current_worker], "/", 1);
+        }
+
         write(
             out_pipes[current_worker],
             file_name,
@@ -117,11 +129,14 @@ void process_files(int m, int *in_pipes, int *out_pipes){
 
     int closed_pipes = 0;
 
+    FILE *in_pointers[m];
+
     for(int i = 0; i < m; i++){
         close(out_pipes[i]);
 
         // listen to in pipes
         FD_SET(in_pipes[i], &in_pipes_set);
+        in_pointers[i] = fdopen(in_pipes[i], "r");
     }
 
     char read_key[MAX_KEY];
@@ -133,7 +148,7 @@ void process_files(int m, int *in_pipes, int *out_pipes){
         for(int i = 0; i < m; i++){
             if(FD_ISSET(in_pipes[i], &in_pipes_set)){
                 // Read from pipe
-                if(fscanf(in_pipes[i], "%s%s", read_key, read_val) == EOF){
+                if(fscanf(in_pointers[i], "%s%s", read_key, read_val) == EOF){
                     closed_pipes++;
                 }else{
                     // Process <key, value> (i.e. send to reduce worker).
@@ -141,6 +156,10 @@ void process_files(int m, int *in_pipes, int *out_pipes){
                 }
             }
         }
+    }
+
+    for(int i = 0; i < m; i++){
+        fclose(in_pointers[i]);
     }
 }
 
@@ -198,7 +217,7 @@ void map_digest_files(){
  * @param  m [description]
  * @return   [description]
  */
-void create_map_workers(int m){
+void create_map_workers(char *path, int m){
     int in_pipes[m];
     int out_pipes[m];
 
@@ -261,7 +280,7 @@ void create_map_workers(int m){
     }else{
         // Finished creating map workers
         // Read stdin for filenames, send to map workers.
-        process_files(m, in_pipes, out_pipes);
+        process_files(path, m, in_pipes, out_pipes);
     }
 }
 
@@ -290,7 +309,7 @@ int init_mapreduce(char *path, int m){
         dup2(walker_pipe[0], STDIN_FILENO);
 
         // Start the mapping process.
-        create_map_workers(m);
+        create_map_workers(path, m);
     }else{
         // ERROR
         fprintf(stderr, "Walker Worker: fork failed.\n");
@@ -301,7 +320,7 @@ int init_mapreduce(char *path, int m){
 }
 
 int main(){
-    char *path = "/Users/jcoc611/a3/group_0476/a3/texts";
+    char *path = "/Users/jcoc611/a3/group_0476/a3/texts/";
     int m = 1;
     init_mapreduce(path, m);
 
