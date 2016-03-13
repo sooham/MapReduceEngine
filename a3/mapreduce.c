@@ -113,6 +113,7 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
 
     char file_name[MAX_FILENAME];
     int path_length = strlen(path);
+
     // Just print for now
     while(scanf("%s", file_name) != EOF){
         // Send to worker
@@ -140,43 +141,44 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
             current_worker = 0;
         }
     }
-
+    
+    Pair read_pair;
+    
     fd_set in_pipes_set;
     FD_ZERO(&in_pipes_set);
 
     int closed_pipes = 0;
-
-    FILE *in_pointers[m];
+    int max_pipe = 0;
 
     for(int i = 0; i < m; i++){
         close(out_pipes[i]);
 
         // listen to in pipes
         FD_SET(in_pipes[i], &in_pipes_set);
-        in_pointers[i] = fdopen(in_pipes[i], "r");
+        if(max_pipe < in_pipes[i]){
+            max_pipe = in_pipes[i];
+        }
     }
 
-    char read_key[MAX_KEY];
-    char read_val[MAX_VALUE];
-
     while(closed_pipes < m){
-        select(m - closed_pipes, &in_pipes_set, NULL, NULL, NULL);
+        select(max_pipe + 1, &in_pipes_set, NULL, NULL, NULL);
         // Process ready pipes
         for(int i = 0; i < m; i++){
             if(FD_ISSET(in_pipes[i], &in_pipes_set)){
                 // Read from pipe
-                if(fscanf(in_pointers[i], "%s%s", read_key, read_val) == EOF){
+                
+                int read_result = read(in_pipes[i], &read_pair, sizeof(Pair));
+                if(read_result == 0){
                     closed_pipes++;
+                }else if(read_result < 0){
+                    printf("Master: Error reading map, %d", errno);
                 }else{
                     // Process <key, value> (i.e. send to reduce worker).
-                    printf("Processing <%s, %s>\n", read_key, read_val);
+                    printf("Processing <%s, %s>\n", read_pair.key, read_pair.value);
+                    // printf("Processing ayy");
                 }
             }
         }
-    }
-
-    for(int i = 0; i < m; i++){
-        fclose(in_pointers[i]);
     }
 }
 
@@ -216,6 +218,7 @@ void map_digest_file(char *path){
     } while(chunkSize == READSIZE);
 
     fclose(map_file);
+    exit(0);
 }
 
 /**
@@ -266,7 +269,7 @@ void create_map_workers(char *path, int m){
             // Child (map worker)
             // Route STDOUT to pipe mapper->master
             close(mapper_master_pipe[0]);
-            // dup2(mapper_master_pipe[1], STDOUT_FILENO);
+            dup2(mapper_master_pipe[1], STDOUT_FILENO);
 
             // Route STDIN from pipe master->mapper
             close(master_mapper_pipe[1]);
@@ -278,7 +281,7 @@ void create_map_workers(char *path, int m){
             // Master
             // Store mapper->master pipe
             close(mapper_master_pipe[1]);
-            in_pipes[i] = master_mapper_pipe[1];
+            in_pipes[i] = mapper_master_pipe[0];
 
             // Store master->mapper pipe
             close(master_mapper_pipe[0]);
@@ -338,7 +341,7 @@ int init_mapreduce(char *path, int m){
 
 int main(){
     char *path = "/Users/jcoc611/a3/group_0476/a3/texts/";
-    int m = 1;
+    int m = 2;
     init_mapreduce(path, m);
 
     return 0;
