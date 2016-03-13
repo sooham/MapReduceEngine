@@ -1,3 +1,16 @@
+// ~ ~ '
+// A Master process coordinates the execution of Walk,
+// Map, and Reduce workers.
+// ~ ~ ,
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+
 /**
  * Reads file names from stdin and distributes
  * them evenly to map workers.
