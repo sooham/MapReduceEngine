@@ -90,7 +90,8 @@ MapReduceLogistics process(int argc, char *const *argv) {
 int main(){
     char *path = "/Users/jcoc611/a3/group_0476/a3/texts/";
     int m = 2;
-    create_master(path, m);
+    int r = 2;
+    create_master(path, m, r);
 
     return 0;
 }
