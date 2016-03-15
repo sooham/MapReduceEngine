@@ -13,7 +13,7 @@
 /**
  * Returns a (hopefully) uniform hash of a given key.
  * @param  key the key to hash.
- * @return     the 
+ * @return     the
  */
 unsigned int juan_hash(const char *key){
 	int hash;
@@ -44,8 +44,8 @@ int soohash(const char *key) {
         result = result * 10 + (key[i] - '0');
     }
 
-    int hash_result = (int) floor(100.0 * fmod(result * (sqrt(5) - 1), 1.0));
-    return hash_result;
+    double hash_result = floor(100.0 * fmod(result * (sqrt(5) - 1), 1.0));
+    return (int) hash_result;
 }
 
 int main(){
@@ -56,7 +56,7 @@ int main(){
 		for(int z = 0; z < 101; z++){
 			test[z] = 0;
 		}
-		
+
 		for(int y = 0; y < KEY_TRIES; y++){
 			int keysize = rand() % 64;
 			char key[keysize];
