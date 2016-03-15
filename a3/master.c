@@ -1,7 +1,7 @@
-// ~ ~ '
-// A Master process coordinates the execution of Walk,
-// Map, and Reduce workers.
-// ~ ~ ,
+/*
+ Master process coordinates the execution of Walk,
+ Map, and Reduce workers.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include "master.h"
 
 /**
  * Reads file names from stdin and distributes
@@ -27,16 +28,11 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
     // Just print for now
     while(scanf("%s", file_name) != EOF){
         // Send to worker
-
         write(
             out_pipes[current_worker],
             path,
             path_length
         );
-
-        if(path[path_length - 1] != '/'){
-            write(out_pipes[current_worker], "/", 1);
-        }
 
         write(
             out_pipes[current_worker],
@@ -51,9 +47,9 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
             current_worker = 0;
         }
     }
-    
+
     Pair read_pair;
-    
+
     fd_set in_pipes_set;
     FD_ZERO(&in_pipes_set);
 
@@ -76,7 +72,7 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
         for(int i = 0; i < m; i++){
             if(FD_ISSET(in_pipes[i], &in_pipes_set)){
                 // Read from pipe
-                
+
                 int read_result = read(in_pipes[i], &read_pair, sizeof(Pair));
                 if(read_result == 0){
                     closed_pipes++;
@@ -144,11 +140,11 @@ create_workers(char *path, int m, int r){
     if(f == 0){
         // Break from child
         // do reduce stuff
-        
+
     }else{
         // Finished creating map workers
         // Read stdin for filenames, send to map workers.
-        
+
         // Start the mapping process.
         create_map_workers(path, m);
     }
@@ -254,7 +250,7 @@ int create_master(char *path, int m, int r){
         close(walker_pipe[1]);
         dup2(walker_pipe[0], STDIN_FILENO);
 
-        create_workers(path, m, r);        
+        create_workers(path, m, r);
     }else{
         // ERROR
         fprintf(stderr, "Walker Worker: fork failed.\n");

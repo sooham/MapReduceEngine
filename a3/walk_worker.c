@@ -1,7 +1,7 @@
-// ~ ~ '
-// A Walk Worker outputs to stdout the file paths
-// to be read by Map Workers.
-// ~ ~ ,
+/*
+ Walk Worker outputs to stdout the file paths
+ to be read by Map Workers.
+*/
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -15,6 +15,7 @@ void walk_directory(char *path){
     char *args[] = { "ls", path, NULL };
     execvp("ls", args);
 
+    // TODO: Improve error handling here
     // If the above call fails exit with status 1.
     exit(1);
 }
