@@ -1,8 +1,8 @@
-// ~ ~ '
-// A Map Worker receives file names via standard input,
-// and outputs <key, value> Pairs through standard output
-// using the currently defined map() function.
-// ~ ~ ,
+/*
+ A Map Worker receives file names via standard input,
+ and outputs <key, value> Pairs through standard output
+ using the currently defined map() function.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,12 +23,13 @@ void map_digest_file(char *path){
 
     // DESIGN DECISION:
     // Should map worker die if file reading fails?
-    if(map_file == NULL){
+    if (map_file == NULL){
         fprintf(stderr, "Map Worker: can't open file '%s'", path);
         exit(1);
     }
 
     size_t chunkSize;
+
     do {
         chunkSize = fread(chunk, sizeof(char), READSIZE, map_file);
         if(chunkSize == 0) {
