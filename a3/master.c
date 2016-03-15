@@ -92,10 +92,67 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
     }
 }
 
-/**
- * error handling function
- */
 
+/**
+ * Creates r reduce workers ready for use.
+ * @param  m [description]
+ * @param  r [description]
+ * @return   [description]
+ */
+create_workers(char *path, int m, int r){
+    int reduce_pipes[r];
+
+    // Fork indicator
+    int f = -1;
+
+    // Fork n times
+    // Establish pipes with each child
+    // Return open pipes
+    for(int i = 0; i < r; i++){
+        // Create the mapper->master pipe
+        int master_reduce_pipe[2];
+        if(pipe(master_reduce_pipe)){
+            fprintf(stderr, "Reduce Worker: master_reduce pipe failed.\n");
+            exit(30);
+        }
+
+        // Fork into map worker
+        f = fork();
+
+        if(f == 0){
+            // Child (map worker)
+
+            // Route STDIN from pipe master->reduce
+            close(master_reduce_pipe[1]);
+            dup2(master_reduce_pipe[0], STDIN_FILENO);
+
+            // We don't want to spawn children from child
+            break;
+        }else if(f > 0){
+            // Master
+
+            // Store master->mapper pipe
+            close(master_reduce_pipe[0]);
+            reduce_pipes[i] = master_reduce_pipe[1];
+        }else{
+            // ERROR
+            fprintf(stderr, "Map Worker: fork failed.\n");
+            exit(32);
+        }
+    }
+
+    if(f == 0){
+        // Break from child
+        // do reduce stuff
+        
+    }else{
+        // Finished creating map workers
+        // Read stdin for filenames, send to map workers.
+        
+        // Start the mapping process.
+        create_map_workers(path, m);
+    }
+}
 
 /**
  * Creates m map workers ready for use.
@@ -170,10 +227,14 @@ void create_map_workers(char *path, int m){
 }
 
 /**
- * Creates a walker worker and routes its
- * stdout to this process' stdin.
+ * Creates a master worker that spawns m map children
+ * and r reduce children, initiating a MapReduce operation.
+ * @param  path the location of the folder containing the input data files.
+ * @param  m    the number of map children.
+ * @param  r    the number of reduce children.
+ * @return      zero on success, and a non-zero value on error.
  */
-int create_master(char *path, int m){
+int create_master(char *path, int m, int r){
     // Create the walker->master pipe
     int walker_pipe[2];
     if(pipe(walker_pipe)){
@@ -193,8 +254,7 @@ int create_master(char *path, int m){
         close(walker_pipe[1]);
         dup2(walker_pipe[0], STDIN_FILENO);
 
-        // Start the mapping process.
-        create_map_workers(path, m);
+        create_workers(path, m, r);        
     }else{
         // ERROR
         fprintf(stderr, "Walker Worker: fork failed.\n");
