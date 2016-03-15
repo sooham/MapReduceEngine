@@ -1,11 +1,8 @@
-# default not complete
 # use the GNU C Compiler
-CC=gcc
+CC = gcc
 
 # options to pass into the compiler
-CFLAGS=-Wall -Werror -g -std=c99
-
-all: default
+CFLAGS = -Wall -Werror -g -std=c99
 
 default: mapreduce.o master.o map_worker.o reduce_worker.o walk_worker.o linkedlist.o word_freq.o
 	$(CC) $(CFLAGS) -o mapreduce mapreduce.o master.o map_worker.o reduce_worker.o walk_worder.o linkedlist.o word_freq.o
