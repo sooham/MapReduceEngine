@@ -26,8 +26,9 @@ void error(char *msg, int count, ...) {
  * A function to read in the command line args and set them appropriately.
  * [-m numprocs] [-r numprocs] -d dirname
  *
- * do not assume dirname ends with a slash
+ * do not assume dirname ends with a slash TODO: did I assume this?
  */
+
 // int opterr - non zero, then getopt prints an error message
 //
 // int optopt - when getopt encounters an unknown option char or option
@@ -40,7 +41,7 @@ void error(char *msg, int count, ...) {
 // those that accept arguments
 
 // TODO: Init result in a simpler way using c99 partial struct initializtion
-// TODO: naming members of struct MapReduceLogistics sucks, correct it
+
 MapReduceLogistics process(int argc, char *const *argv) {
     MapReduceLogistics res = {
         .nmapworkers = 2,               // TODO: Why magic numbers?
@@ -66,6 +67,10 @@ MapReduceLogistics process(int argc, char *const *argv) {
                 dflag = 1;
                 strncpy(res.dirname, optarg, sizeof(res.dirname));
                 res.dirname[sizeof(res.dirname) - 1] = '\0';
+
+                if (res.dirname[strlen(res.dirname) - 1] != '/') {
+                    res.dirname[strlen(res.dirname) - 1] = '/';
+                }
                 break;
             default:
                 throw_error = 1;
@@ -87,11 +92,17 @@ MapReduceLogistics process(int argc, char *const *argv) {
     return res;
 }
 
-int main(){
-    char *path = "/Users/jcoc611/a3/group_0476/a3/texts/";
+int main(int argc, char *argv[]){
+
+    // NOTE: Juan just uncomment this if u want
+    /* char *path = "/Users/jcoc611/a3/group_0476/a3/texts/";
     int m = 2;
     int r = 2;
     create_master(path, m, r);
+    */
+    MapReduceLogistics out = process(argc, argv);
+
+    create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
 
     return 0;
 }
