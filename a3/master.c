@@ -19,27 +19,29 @@
  * @param in_pipes  An array of mapper->master pipes.
  * @param out_pipes An array of master->mapper pipes.
  */
-void process_files(char *path, int m, int *in_pipes, int *out_pipes){
+void process_files(char *path, int m, int *in_pipes, int *out_pipes,
+        int r, int *reduce_pipes){
     int current_worker = 0;
 
     char file_name[MAX_FILENAME];
     int path_length = strlen(path);
 
-    // Just print for now
+    // Read file names from walk worker
+    // Send to map workers uniformly
     while(scanf("%s", file_name) != EOF){
         // Send to worker
         write(
             out_pipes[current_worker],
             path,
-            path_length
+            path_length * sizeof(char)
         );
 
         write(
             out_pipes[current_worker],
             file_name,
-            strlen(file_name)
+            strlen(file_name) * sizeof(char)
         );
-        write(out_pipes[current_worker], "\0", 1);
+        write(out_pipes[current_worker], "\0", sizeof(char));
 
         // Distribute uniformly
         current_worker++;
@@ -66,13 +68,19 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
         }
     }
 
+    // Read k/v Pairs from map worker
+    // Send them to appropriate reduce worker
+    // NOTE: the guarantee of uniformity when it comes to
+    // distributing k/v pairs to reduce workers is
+    // implicit in the hash function used. While juanhash
+    // is not a perfect hash (it was built by us so it's
+    // probably not too good), it performs relatively well.
     while(closed_pipes < m){
         select(max_pipe + 1, &in_pipes_set, NULL, NULL, NULL);
         // Process ready pipes
         for(int i = 0; i < m; i++){
             if(FD_ISSET(in_pipes[i], &in_pipes_set)){
                 // Read from pipe
-
                 int read_result = read(in_pipes[i], &read_pair, sizeof(Pair));
                 if(read_result == 0){
                     closed_pipes++;
@@ -80,11 +88,16 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes){
                     printf("Master: Error reading map, %d", errno);
                 }else{
                     // Process <key, value> (i.e. send to reduce worker).
-                    printf("Processing <%s, %s>\n", read_pair.key, read_pair.value);
-                    // printf("Processing ayy");
+                    int reduce_id = juanhash(read_pair.key) % r;
+                    write(reduce_pipes[reduce_id], &read_pair, sizeof(Pair));
                 }
             }
         }
+    }
+
+    // Close reduce pipes
+    for(int i = 0; i < r; i++){
+        close(reduce_pipes[i]);
     }
 }
 
@@ -146,7 +159,7 @@ create_workers(char *path, int m, int r){
         // Read stdin for filenames, send to map workers.
 
         // Start the mapping process.
-        create_map_workers(path, m);
+        create_map_workers(path, m, r, reduce_pipes);
     }
 }
 
@@ -155,7 +168,7 @@ create_workers(char *path, int m, int r){
  * @param  m [description]
  * @return   [description]
  */
-void create_map_workers(char *path, int m){
+void create_map_workers(char *path, int m, int r, int *reduce_pipes){
     int in_pipes[m];
     int out_pipes[m];
 
@@ -218,7 +231,7 @@ void create_map_workers(char *path, int m){
     }else{
         // Finished creating map workers
         // Read stdin for filenames, send to map workers.
-        process_files(path, m, in_pipes, out_pipes);
+        process_files(path, m, in_pipes, out_pipes, r, reduce_pipes);
     }
 }
 
