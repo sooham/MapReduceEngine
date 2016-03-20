@@ -29,7 +29,7 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes,
 
     // Read file names from walk worker
     // Send to map workers uniformly
-while(scanf("%s", file_name) > 0){
+    while(scanf("%s", file_name) > 0){
         // Send to worker
         safe_write(
             out_pipes[current_worker],
@@ -127,6 +127,11 @@ create_workers(char *path, int m, int r){
         if(f == 0){
             // Child (map worker)
 
+            // Close all other pipes
+            for(int z = 0; z < i; z++){
+                safe_close(reduce_pipes[z]);    
+            }
+
             // Route STDIN from pipe master->reduce
             safe_close(master_reduce_pipe[1]);
             safe_dup2(master_reduce_pipe[0], STDIN_FILENO);
@@ -184,6 +189,13 @@ void create_map_workers(char *path, int m, int r, int *reduce_pipes){
 
         if(f == 0){
             // Child (map worker)
+            
+            // Close all other pipes
+            for(int z = 0; z < i; z++){
+                safe_close(in_pipes[z]);
+                safe_close(out_pipes[z]);
+            }
+
             // Route STDOUT to pipe mapper->master
             safe_close(mapper_master_pipe[0]);
             safe_dup2(mapper_master_pipe[1], STDOUT_FILENO);

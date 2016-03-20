@@ -20,7 +20,7 @@ default: $(OBJS) word_freq.o
 mapreduce.o: mapreduce.c mapreduce.h
 	$(CC) $(CFLAGS) mapreduce.c
 
-hash.o: hash.c
+hash.o: hash.c hash.h
 	$(CC) $(CFLAGS) hash.c
 
 master.o: master.c master.h
