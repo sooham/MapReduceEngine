@@ -1,58 +1,48 @@
+#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <unistd.h>
 #include <string.h>
-#include <errno.h>
-#include <stdarg.h>         // for variable args to function
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "mapreduce.h"
 
 /* printing to stderr conveniently in a varadic manner*/
+// TODO: are we allowed to change the mapreduce header file
+// if yes, put function prototype in there
 void error(char *msg, int count, ...) {
     va_list vargs;
     va_start(vargs, count);
 
-    char new_msg[strlen(msg) + 2];
-    strncpy(new_msg, msg, strlen(msg));
-    new_msg[sizeof(new_msg) - 2] = '\n';
-    new_msg[sizeof(new_msg) - 1]  ='\0';
+    char new_msg[sizeof(msg) + 2];
+    strncpy(new_msg, msg, sizeof(new_msg));
+    new_msg[sizeof(new_msg) + 1] = '\0';
+    new_msg[sizeof(new_msg)]  ='\n';
 
     vfprintf(stderr, new_msg, vargs);
     va_end(vargs);
 }
 
 /**
- * A function to read in the command line args and set them appropriately.
- * [-m numprocs] [-r numprocs] -d dirname
+ * Read the command line args and set map reduce logistics
+ * appropriately. The usage format is [-m numprocs] [-r numprocs] -d dirname.
  *
  * do not assume dirname ends with a slash TODO: did I assume this?
  */
 
-// int opterr - non zero, then getopt prints an error message
-//
-// int optopt - when getopt encounters an unknown option char or option
-// char, stores it here
-//
-// int optind - set by getopt to the index of the next element in argv array
-// to be processed after all option args processed
-//
-// char * optarg - set by getopt to point at the value of option arg, for
-// those that accept arguments
-
-// TODO: Init result in a simpler way using c99 partial struct initializtion
-
 MapReduceLogistics process(int argc, char *const *argv) {
     MapReduceLogistics res = {
-        .nmapworkers = 2,               // TODO: Why magic numbers?
-        .nreduceworkers = 2,
+        .nmapworkers = DEFAULT_NWORKERS,
+        .nreduceworkers = DEFAULT_NWORKERS,
         .dirname = ""
     };
 
     int dflag = 0;
     int throw_error = 0;
 
-    opterr = 0;
+    opterr = 0;       // do not let getopts throw error if missing argument
     int output;
 
     while ((output = getopt(argc, argv, "m:r:d:")) != -1) {
@@ -65,19 +55,18 @@ MapReduceLogistics process(int argc, char *const *argv) {
                 break;
             case 'd':
                 dflag = 1;
+                // check the length of input string can include null term
+                if (strlen(optarg) >= MAX_FILENAME) throw_error = 1;
                 strncpy(res.dirname, optarg, sizeof(res.dirname));
                 res.dirname[sizeof(res.dirname) - 1] = '\0';
-
-                if (res.dirname[strlen(res.dirname) - 1] != '/') {
-                    res.dirname[strlen(res.dirname) - 1] = '/';
-                }
+                // TODO: concatenating end of file '/' done in list worker
                 break;
             default:
                 throw_error = 1;
         }
     }
 
-    if (!dflag || optind != argc) {
+    if (!dflag || res.nmapworkers <= 0 || res.nreduceworkers <= 0 || optind != argc) {
         throw_error = 1;
     }
 
@@ -93,16 +82,9 @@ MapReduceLogistics process(int argc, char *const *argv) {
 }
 
 int main(int argc, char *argv[]){
-
-    // NOTE: Juan just uncomment this if u want
-    /* char *path = "/Users/jcoc611/a3/group_0476/a3/texts/";
-    int m = 2;
-    int r = 2;
-    create_master(path, m, r);
-    */
     MapReduceLogistics out = process(argc, argv);
-
-    create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
+    printf("nmapworkers = %d, nreduceworker = %d, dirname = %s\n", out.nmapworkers, out.nreduceworkers, out.dirname);
+    // create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
 
     return 0;
 }
