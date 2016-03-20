@@ -83,8 +83,6 @@ MapReduceLogistics process(int argc, char *const *argv) {
 
 int main(int argc, char *argv[]){
     MapReduceLogistics out = process(argc, argv);
-    printf("nmapworkers = %d, nreduceworker = %d, dirname = %s\n", out.nmapworkers, out.nreduceworkers, out.dirname);
-    // create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
-
+    create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
     return 0;
 }
