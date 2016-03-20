@@ -16,10 +16,10 @@ void error(char *msg, int count, ...) {
     va_list vargs;
     va_start(vargs, count);
 
-    char new_msg[sizeof(msg) + 2];
+    char new_msg[strlen(msg) + 2];
     strncpy(new_msg, msg, sizeof(new_msg));
-    new_msg[sizeof(new_msg) + 1] = '\0';
-    new_msg[sizeof(new_msg)]  ='\n';
+    new_msg[strlen(new_msg) + 1] = '\0';
+    new_msg[strlen(new_msg)]  ='\n';
 
     vfprintf(stderr, new_msg, vargs);
     va_end(vargs);
