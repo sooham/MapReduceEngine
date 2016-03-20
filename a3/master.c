@@ -242,7 +242,6 @@ void create_map_workers(char *path, int m, int r, int *reduce_pipes){
  * @param  path the location of the folder containing the input data files.
  * @param  m    the number of map children.
  * @param  r    the number of reduce children.
- * @return      zero on success, and a non-zero value on error.
  */
 int create_master(char *path, int m, int r){
     // Create the walker->master pipe
@@ -257,12 +256,18 @@ int create_master(char *path, int m, int r){
     if(f == 0){
         // Child (walker worker)
         close(walker_pipe[0]);
-        dup2(walker_pipe[1], STDOUT_FILENO);
+        if(dup2(walker_pipe[1], STDOUT_FILENO) == -1){
+            fprintf(stderr, "Walker Worker: STDOUT redirection failed.\n");
+            exit(12);
+        }
         walk_directory(path);
     }else if(f > 0){
         // Master, route child stdout to stdin
         close(walker_pipe[1]);
-        dup2(walker_pipe[0], STDIN_FILENO);
+        if(dup2(walker_pipe[0], STDIN_FILENO) == -1){
+            fprintf(stderr, "Walker Worker: STDIN redirection failed.\n");
+            exit(13);
+        }
 
         create_workers(path, m, r);
     }else{
