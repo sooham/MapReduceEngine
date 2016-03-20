@@ -52,4 +52,4 @@ $(FILE).o : $(FILE).c
 
 # dummy cleaning flag
 clean:
-	rm -f *.o mapreduce *.swp *.dSYM .\#mapreduce.c
+	rm -rf *.o mapreduce *.swp *.dSYM .\#mapreduce.c
