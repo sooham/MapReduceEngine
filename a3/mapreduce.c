@@ -13,27 +13,6 @@
 
 #include "mapreduce.h"
 
-/* Prints to stderr conveniently in a varadic fashion.
- *
- * @param msg       message to print.
- * @param count     total number of optional arguments provided.
- * @param ...       optional arugments
- */
-// TODO: are we allowed to change the mapreduce header file
-// if yes, put function prototype in there
-void error(char *msg, int count, ...) {
-    va_list vargs;
-    va_start(vargs, count);
-
-    char new_msg[strlen(msg) + 2];
-    strncpy(new_msg, msg, sizeof(new_msg));
-    new_msg[strlen(new_msg) + 1] = '\0';
-    new_msg[strlen(new_msg)]  ='\n';
-
-    vfprintf(stderr, new_msg, vargs);
-    va_end(vargs);
-}
-
 /**
  * Read the command line argumentss and set MapReduce logistics
  * appropriately.
