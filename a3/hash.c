@@ -6,11 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Some notes:
+// This hash function was created by us after some very short research.
+// The constants chosen are what they are because they generated
+// good results after testing with thousands of keys and possible values.
 
 /**
  * Returns a (hopefully) uniform hash of a given key.
  * @param  key the key to hash.
- * @return     the
+ * @return     the integer hash for the given key.
  */
 unsigned int juan_hash(const char *key){
 	int hash;

@@ -45,7 +45,6 @@ void map_digest_file(char *path){
     } while(chunkSize == READSIZE);
 
     fclose(map_file);
-    exit(0);
 }
 
 /**
@@ -53,8 +52,10 @@ void map_digest_file(char *path){
  */
 void map_digest_files(){
     char file_path[MAX_FILENAME];
-    // Just print for now
+
     while(scanf("%s", file_path) != EOF){
         map_digest_file(file_path);
     }
+
+    exit(0);
 }
