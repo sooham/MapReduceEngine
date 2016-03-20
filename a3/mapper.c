@@ -19,23 +19,12 @@
 void map_digest_file(char *path){
     char chunk[READSIZE + 1];
 
-    FILE *map_file = fopen(path, "r");
-
-    // DESIGN DECISION:
-    // Should map worker die if file reading fails?
-    if (map_file == NULL){
-        fprintf(stderr, "Map Worker: can't open file '%s'", path);
-        exit(1);
-    }
+    FILE *map_file = safe_fopen(path, "r");
 
     size_t chunkSize;
 
     do {
-        chunkSize = fread(chunk, sizeof(char), READSIZE, map_file);
-        if(chunkSize == 0) {
-            fprintf(stderr, "Map Worker: Error reading file '%s'", path);
-            exit(2);
-        }
+        chunkSize = safe_fread(chunk, sizeof(char), READSIZE, map_file);
 
         // Null terminate chunk
         chunk[chunkSize + 1] = '\0';
@@ -44,7 +33,7 @@ void map_digest_file(char *path){
         map(chunk, STDOUT_FILENO);
     } while(chunkSize == READSIZE);
 
-    fclose(map_file);
+    safe_fclose(map_file);
 }
 
 /**
@@ -53,7 +42,7 @@ void map_digest_file(char *path){
 void map_digest_files(){
     char file_path[MAX_FILENAME];
 
-    while(scanf("%s", file_path) != EOF){
+    while(scanf("%s", file_path) > 0){
         map_digest_file(file_path);
     }
 

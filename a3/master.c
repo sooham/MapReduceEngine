@@ -29,20 +29,20 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes,
 
     // Read file names from walk worker
     // Send to map workers uniformly
-    while(scanf("%s", file_name) != EOF){
+while(scanf("%s", file_name) > 0){
         // Send to worker
-        write(
+        safe_write(
             out_pipes[current_worker],
             path,
             path_length * sizeof(char)
         );
 
-        write(
+        safe_write(
             out_pipes[current_worker],
             file_name,
             strlen(file_name) * sizeof(char)
         );
-        write(out_pipes[current_worker], "\0", sizeof(char));
+        safe_write(out_pipes[current_worker], "\0", sizeof(char));
 
         // Distribute uniformly
         current_worker++;
@@ -60,7 +60,7 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes,
     int max_pipe = 0;
 
     for(int i = 0; i < m; i++){
-        close(out_pipes[i]);
+        safe_close(out_pipes[i]);
 
         // listen to in pipes
         FD_SET(in_pipes[i], &in_pipes_set);
@@ -82,11 +82,9 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes,
         for(int i = 0; i < m; i++){
             if(FD_ISSET(in_pipes[i], &in_pipes_set)){
                 // Read from pipe
-                int read_result = read(in_pipes[i], &read_pair, sizeof(Pair));
+                int read_result = safe_read(in_pipes[i], &read_pair, sizeof(Pair));
                 if(read_result == 0){
                     closed_pipes++;
-                }else if(read_result < 0){
-                    printf("Master: Error reading map, %d", errno);
                 }else{
                     // Process <key, value> (i.e. send to reduce worker).
                     int reduce_id = juanhash(read_pair.key) % r;
@@ -98,7 +96,7 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes,
 
     // Close reduce pipes
     for(int i = 0; i < r; i++){
-        close(reduce_pipes[i]);
+        safe_close(reduce_pipes[i]);
     }
 }
 
@@ -121,33 +119,26 @@ create_workers(char *path, int m, int r){
     for(int i = 0; i < r; i++){
         // Create the mapper->master pipe
         int master_reduce_pipe[2];
-        if(pipe(master_reduce_pipe)){
-            fprintf(stderr, "Reduce Worker: master_reduce pipe failed.\n");
-            exit(30);
-        }
+        safe_pipe(master_reduce_pipe);
 
         // Fork into map worker
-        f = fork();
+        f = safe_fork();
 
         if(f == 0){
             // Child (map worker)
 
             // Route STDIN from pipe master->reduce
-            close(master_reduce_pipe[1]);
-            dup2(master_reduce_pipe[0], STDIN_FILENO);
+            safe_close(master_reduce_pipe[1]);
+            safe_dup2(master_reduce_pipe[0], STDIN_FILENO);
 
             // We don't want to spawn children from child
             break;
-        }else if(f > 0){
+        }else{
             // Master
 
             // Store master->mapper pipe
-            close(master_reduce_pipe[0]);
+            safe_close(master_reduce_pipe[0]);
             reduce_pipes[i] = master_reduce_pipe[1];
-        }else{
-            // ERROR
-            fprintf(stderr, "Map Worker: fork failed.\n");
-            exit(32);
         }
     }
 
@@ -182,46 +173,36 @@ void create_map_workers(char *path, int m, int r, int *reduce_pipes){
     for(int i = 0; i < m; i++){
         // Create the mapper->master pipe
         int mapper_master_pipe[2];
-        if(pipe(mapper_master_pipe)){
-            fprintf(stderr, "Map Worker: mapper_paster pipe failed.\n");
-            exit(20);
-        }
+        safe_pipe(mapper_master_pipe);
 
         // Create the master->mapper pipe
         int master_mapper_pipe[2];
-        if(pipe(master_mapper_pipe)){
-            fprintf(stderr, "Map Worker: master_mapper pipe failed.\n");
-            exit(21);
-        }
+        safe_pipe(master_mapper_pipe);
 
         // Fork into map worker
-        f = fork();
+        f = safe_fork();
 
         if(f == 0){
             // Child (map worker)
             // Route STDOUT to pipe mapper->master
-            close(mapper_master_pipe[0]);
-            dup2(mapper_master_pipe[1], STDOUT_FILENO);
+            safe_close(mapper_master_pipe[0]);
+            safe_dup2(mapper_master_pipe[1], STDOUT_FILENO);
 
             // Route STDIN from pipe master->mapper
-            close(master_mapper_pipe[1]);
-            dup2(master_mapper_pipe[0], STDIN_FILENO);
+            safe_close(master_mapper_pipe[1]);
+            safe_dup2(master_mapper_pipe[0], STDIN_FILENO);
 
             // We don't want to spawn children from child
             break;
-        }else if(f > 0){
+        }else{
             // Master
             // Store mapper->master pipe
-            close(mapper_master_pipe[1]);
+            safe_close(mapper_master_pipe[1]);
             in_pipes[i] = mapper_master_pipe[0];
 
             // Store master->mapper pipe
-            close(master_mapper_pipe[0]);
+            safe_close(master_mapper_pipe[0]);
             out_pipes[i] = master_mapper_pipe[1];
-        }else{
-            // ERROR
-            fprintf(stderr, "Map Worker: fork failed.\n");
-            exit(22);
         }
     }
 
@@ -246,34 +227,22 @@ void create_map_workers(char *path, int m, int r, int *reduce_pipes){
 int create_master(char *path, int m, int r){
     // Create the walker->master pipe
     int walker_pipe[2];
-    if(pipe(walker_pipe)){
-        fprintf(stderr, "Walker Worker: pipe failed.\n");
-        exit(10);
-    }
+    safe_pipe(walker_pipe);
 
     // Fork into walker worker
-    int f = fork();
+    int f = safe_fork();
     if(f == 0){
         // Child (walker worker)
-        close(walker_pipe[0]);
-        if(dup2(walker_pipe[1], STDOUT_FILENO) == -1){
-            fprintf(stderr, "Walker Worker: STDOUT redirection failed.\n");
-            exit(12);
-        }
+        safe_close(walker_pipe[0]);
+        safe_dup2(walker_pipe[1], STDOUT_FILENO);
+
         walk_directory(path);
-    }else if(f > 0){
+    }else{
         // Master, route child stdout to stdin
-        close(walker_pipe[1]);
-        if(dup2(walker_pipe[0], STDIN_FILENO) == -1){
-            fprintf(stderr, "Walker Worker: STDIN redirection failed.\n");
-            exit(13);
-        }
+        safe_close(walker_pipe[1]);
+        safe_dup2(walker_pipe[0], STDIN_FILENO);
 
         create_workers(path, m, r);
-    }else{
-        // ERROR
-        fprintf(stderr, "Walker Worker: fork failed.\n");
-        exit(11);
     }
 
     return 0;
