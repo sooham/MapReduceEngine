@@ -88,7 +88,7 @@ while(scanf("%s", file_name) > 0){
                 }else{
                     // Process <key, value> (i.e. send to reduce worker).
                     int reduce_id = juanhash(read_pair.key) % r;
-                    write(reduce_pipes[reduce_id], &read_pair, sizeof(Pair));
+                    safe_write(reduce_pipes[reduce_id], &read_pair, sizeof(Pair));
                 }
             }
         }
