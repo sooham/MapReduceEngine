@@ -1,19 +1,20 @@
 /*
- Walk Worker outputs to stdout the file paths
- to be read by Map Workers.
+ Lister writes to stdout the file paths to be read by Mappers.
 */
 
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 /**
  * Reads the filename of all files in a directory,
  * and writes them to stdout.
- * @param path the path to the directory.
+ *
+ * @dirname path the path to the directory.
  */
-void walk_directory(char *path){
-    char *args[] = { "ls", path, NULL };
-    execvp("ls", args);
+void walk_directory(char *dirname){
+    char *args[] = {"ls", dirname, NULL};
+    execvp("ls", args);         // TODO: Is ls located here in cdf?
+    // TODO: Does the directory exist?
 
     // TODO: Improve error handling here
     // If the above call fails exit with status 1.

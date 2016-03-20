@@ -1,3 +1,7 @@
+/*
+ * Mapreduce parses input command line arguments and runs MapReduce
+ */
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -9,7 +13,12 @@
 
 #include "mapreduce.h"
 
-/* printing to stderr conveniently in a varadic manner*/
+/* Prints to stderr conveniently in a varadic fashion.
+ *
+ * @param msg       message to print.
+ * @param count     total number of optional arguments provided.
+ * @param ...       optional arugments
+ */
 // TODO: are we allowed to change the mapreduce header file
 // if yes, put function prototype in there
 void error(char *msg, int count, ...) {
@@ -26,8 +35,12 @@ void error(char *msg, int count, ...) {
 }
 
 /**
- * Read the command line args and set map reduce logistics
- * appropriately. The usage format is [-m numprocs] [-r numprocs] -d dirname.
+ * Read the command line argumentss and set MapReduce logistics
+ * appropriately.
+ * Usage format is mapreduce [-m numprocs] [-r numprocs] -d dirname.
+ *
+ * @param argc      command line argument count
+ * @param argv      command line argument vector
  *
  * do not assume dirname ends with a slash TODO: did I assume this?
  */
