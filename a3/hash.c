@@ -16,7 +16,7 @@
  * @param  key the key to hash.
  * @return     the integer hash for the given key.
  */
-unsigned int juan_hash(const char *key){
+unsigned int juanhash(const char *key){
 	int hash;
 	int keysize = strlen(key);
 

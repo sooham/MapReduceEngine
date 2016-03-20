@@ -13,7 +13,8 @@
  */
 void walk_directory(char *dirname){
     char *args[] = {"ls", dirname, NULL};
-    execvp("ls", args);         // TODO: Is ls located here in cdf?
+    safe_execvp("ls", args);
+    // TODO: Is ls located here in cdf?
     // TODO: Does the directory exist?
 
     // TODO: Improve error handling here
