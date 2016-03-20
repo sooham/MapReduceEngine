@@ -1,39 +1,55 @@
 # use the GNU C Compiler
 CC = gcc
 
-# options to pass into the compiler
-CFLAGS = -Wall -Werror -g -std=c99
+# debug
+DEBUG = -g
 
-default: mapreduce.o master.o map_worker.o reduce_worker.o walk_worker.o linkedlist.o word_freq.o
-	$(CC) $(CFLAGS) -o mapreduce mapreduce.o master.o map_worker.o reduce_worker.o walk_worder.o linkedlist.o word_freq.o
+# compilation flags
+CFLAGS = -Wall -Werror -std=c99 -c $(DEBUG)
 
-# general rule for compiling c files into object files
-# all c files must provide an associated header file in or
+# linker flags
+LFLAGS = -Wall -Werror -std=c99 $(DEBUG)
+
+# object files
+OBJS = mapreduce.o hash.o linkedlist.o lister.o mapper.o master.o reducer.o
+
+
+default: $(OBJS) word_freq.o
+	$(CC) $(LFLAGS) $(OBJS) word_freq.o -o mapreduce
 
 mapreduce.o: mapreduce.c mapreduce.h
-	$(CC) $(CFLAGS) -c mapreduce.c
+	$(CC) $(CFLAGS) mapreduce.c
+
+hash.o: hash.c
+	$(CC) $(CFLAGS) hash.c
 
 master.o: master.c master.h
-	$(CC) $(CFLAGS) -c master.c
+	$(CC) $(CFLAGS) master.c
 
-map_worker.o: map_worker.c map_worker.h
-	$(CC) $(CFLAGS) -c map_worker.c
+mapper.o: mapper.c mapper.h
+	$(CC) $(CFLAGS) mapper.c
 
-reduce_worker.o: reduce_worker.c reduce_worker.h
-	$(CC) $(CFLAGS) -c reduce_worker.c
+reducer.o: reducer.c reducer.h
+	$(CC) $(CFLAGS) reducer.c
 
-walk_worker.o: walk_worker.c walk_worker.h
-	$(CC) $(CFLAGS) -c walk_worker.c
+lister.o: lister.c lister.h
+	$(CC) $(CFLAGS) lister.c
 
 linkedlist.o: linkedlist.c linkedlist.h
-	$(CC) $(CFLAGS) -c linkedlist.c
+	$(CC) $(CFLAGS) linkedlist.c
 
 word_freq.o: word_freq.c
-	$(CC) $(CFLAGS) -c word_freq.c
+	$(CC) $(CFLAGS) word_freq.c
 
-# TODO: Complete this
-#specific_mapreduce:
-	# for specific map and reduce functions provided
+# dummy flag used for providing a specified map reduce function source file
+# as command line arguments to make
+# Usage: make specific FILE=filename (without .c extension)
+specific: $(OBJS) $(FILE).o
+	$(CC) $(LFLAGS) $(OBJS) $(FILE).o -o mapreduce
 
+$(FILE).o : $(FILE).c
+	$(CC) $(CFLAGS) $(FILE).c
+
+# dummy cleaning flag
 clean:
-	rm -f *.o mapreduce
+	rm -f *.o mapreduce *.swp *.dSYM .\#mapreduce.c
