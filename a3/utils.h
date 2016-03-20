@@ -41,6 +41,15 @@ size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
  */
 void safe_write(int fildes, const void *buf, size_t nbyte);
 
+/** 
+ * Prints to stderr conveniently in a varadic fashion.
+ *
+ * @param msg       message to print.
+ * @param count     total number of optional arguments provided.
+ * @param ...       optional arugments
+ */
+void error(char *msg, int count, ...);
+
 /**
  * Prints a formatted string to a given stream.
  * Same signature as fprintf.

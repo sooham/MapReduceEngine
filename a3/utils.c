@@ -17,7 +17,7 @@
  */
 void safe_execvp(const char *file, char *const argv[]){
 	if(execvp(file, argv) < 0){
-		safe_printf(stderr, "Error executing %s\n", file);
+		safe_fprintf(stderr, "Error executing %s\n", file);
 		exit(1);
 	}
 }
@@ -32,7 +32,7 @@ void safe_execvp(const char *file, char *const argv[]){
 ssize_t safe_read(int fildes, void *buf, size_t nbyte){
 	ssize_t result = read(fildes, buf, nbyte);
 	if(result < 0){
-		safe_printf(stderr, "Error reading from a file descriptor.\n");
+		safe_fprintf(stderr, "Error reading from a file descriptor.\n");
 		exit(1);
 	}
 
@@ -50,7 +50,7 @@ ssize_t safe_read(int fildes, void *buf, size_t nbyte){
 size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream){
 	size_t result = fread(ptr, size, nmemb, stream);
 	if(result == 0){
-		safe_printf(stderr, "Error reading from file stream.\n");
+		safe_fprintf(stderr, "Error reading from file stream.\n");
 		exit(1);	
 	}
 
@@ -65,9 +65,32 @@ size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream){
  */
 void safe_write(int fildes, const void *buf, size_t nbyte){
 	if(write(fildes, buf, nbyte) != nbyte){
-		safe_printf(stderr, "Error writing to %d.\n", fildes);
+		safe_fprintf(stderr, "Error writing to %d.\n", fildes);
 		exit(1);
 	}
+}
+
+/** 
+ * Prints to stderr conveniently in a varadic fashion.
+ *
+ * @param msg       message to print.
+ * @param count     total number of optional arguments provided.
+ * @param ...       optional arugments
+ */
+void error(char *msg, int count, ...) {
+    va_list vargs;
+    va_start(vargs, count);
+
+    char new_msg[strlen(msg) + 2];
+    strncpy(new_msg, msg, sizeof(new_msg));
+    new_msg[strlen(new_msg) + 1] = '\0';
+    new_msg[strlen(new_msg)]  ='\n';
+
+    if(vfprintf(stderr, new_msg, vargs) < 0){
+    	safe_fprintf(stderr, "Error printing '%s' to stream.\n", new_msg);
+    }
+
+    va_end(vargs);
 }
 
 /**
@@ -82,8 +105,10 @@ void safe_fprintf(FILE *stream, const char *format, ...){
 	if(vfprintf(stream, format, args) < 0){
 		if(stream == stderr) exit(2); // Prevents infinite loop of errors
 
-		safe_printf(stderr, "Error printing '%s' to stream.\n", format);
+		safe_fprintf(stderr, "Error printing '%s' to stream.\n", format);
 	}
+
+	va_end(args);
 }
 
 /**
@@ -120,7 +145,7 @@ void safe_fclose(FILE *stream){
  */
 void safe_close(int file_descriptor){
 	if(close(file_descriptor) < 0){
-		safe_printf(stderr, "Error closing file descriptor %d\n", file_descriptor);
+		safe_fprintf(stderr, "Error closing file descriptor %d\n", file_descriptor);
 		exit(1);
 	}
 }
