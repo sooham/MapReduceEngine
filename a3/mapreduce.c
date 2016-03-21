@@ -2,8 +2,6 @@
  * Mapreduce parses input command line arguments and runs MapReduce
  */
 
-// TODO: dynamically alloc the dirname
-
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -14,16 +12,15 @@
 #include <unistd.h>
 
 #include "mapreduce.h"
+#include "utils.h"
 
+// TODO: move to utils
 /* Prints to stderr conveniently in a varadic fashion.
  *
  * @param msg       message to print.
  * @param count     total number of optional arguments provided.
  * @param ...       optional arugments
  */
-// TODO: are we allowed to change the mapreduce header file
-// or put in utils juan is working on
-// if yes, put function prototype in there
 void error(char *msg, int count, ...) {
     va_list vargs;
     va_start(vargs, count);
@@ -38,7 +35,7 @@ void error(char *msg, int count, ...) {
 }
 
 /**
- * Read the command line argumentss and set MapReduce logistics
+ * Read the command line arguments and set MapReduce logistics
  * appropriately.
  * Usage format is mapreduce [-m numprocs] [-r numprocs] -d dirname.
  *
@@ -51,7 +48,7 @@ MapReduceLogistics process(int argc, char *const *argv) {
     MapReduceLogistics res = {
         .nmapworkers = DEFAULT_NWORKERS,
         .nreduceworkers = DEFAULT_NWORKERS,
-        .dirname = ""
+        .dirname = NULL
     };
 
     int dflag = 0;
@@ -70,11 +67,14 @@ MapReduceLogistics process(int argc, char *const *argv) {
                 break;
             case 'd':
                 dflag = 1;
-                // check the length of input string can include null term
-                if (strlen(optarg) >= MAX_FILENAME) throw_error = 1;
-                strncpy(res.dirname, optarg, sizeof(res.dirname));
-                res.dirname[sizeof(res.dirname) - 1] = '\0';
-                // concatenating end of file '/' done in list worker
+                res.dirname = malloc(sizeof(char) * (strlen(optarg) + 2));
+                strncpy(res.dirname, optarg, strlen(optarg) + 2);
+
+                // concatenating '/' if needed
+                if (res.dirname[strlen(res.dirname) - 1] != '/') {
+                    res.dirname[strlen(res.dirname)] = '/';
+                    res.dirname[strlen(res.dirname) + 1] = '\0';
+                }
                 break;
             default:
                 throw_error = 1;
@@ -99,5 +99,6 @@ MapReduceLogistics process(int argc, char *const *argv) {
 int main(int argc, char *argv[]){
     MapReduceLogistics out = process(argc, argv);
     create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
+    // TODO: free the dynamic memory allocated in out
     return 0;
 }
