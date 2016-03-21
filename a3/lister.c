@@ -2,7 +2,6 @@
  Lister writes to stdout the file paths to be assigned to Mappers.
 */
 
-<<<<<<< .mine
 #include <stdio.h>
 //#include <stdlib.h>
 #include <string.h>
@@ -19,15 +18,7 @@
  * @exit                1 if exec fails
  */
 void list(char *dirname) {
-    // add '/' to end of dirname, note it doesn't matter if
-    // a directory ends with many '/'
-    char full_dirname[MAX_FILENAME + 1];
-    strncpy(full_dirname, dirname, sizeof(full_dirname));
-    full_dirname[strlen(full_dirname)] = '/';
-    // no need to end with null terminator, full_dirname is bigger
-    // then dirname
-
-    char *args[] = {"ls", full_dirname, NULL};
+    char *args[] = {"ls", dirname, NULL};
     safe_execvp("ls", args);
 
     // should not return
