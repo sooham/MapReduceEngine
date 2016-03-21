@@ -15,6 +15,10 @@
 
 #include "mapreduce.h"
 #include "master.h"
+#include "hash.h"
+#include "mapper.h"
+#include "lister.h"
+#include "reducer.h"
 #include "utils.h"
 
 /**
