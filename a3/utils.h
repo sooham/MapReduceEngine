@@ -1,6 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
 // Safe versions of system call functions
 // (Basically sys calls with error handling).
 // Very overkill but hey marks am i rite

@@ -2,8 +2,9 @@
  Lister writes to stdout the file paths to be read by Mappers.
 */
 
-#include <stdlib.h>
-#include <unistd.h>
+// #include <stdlib.h>
+// #include <unistd.h>
+#include "utils.h"
 
 /**
  * Reads the filename of all files in a directory,

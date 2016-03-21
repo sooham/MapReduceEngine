@@ -1,8 +1,10 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <unistd.h>
+// #include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
+
+#include "utils.h"
 
 // Safe versions of system call functions
 // (Basically sys calls with error handling).

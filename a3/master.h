@@ -11,7 +11,7 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes,
  * @param  r [description]
  * @return   [description]
  */
-create_workers(char *path, int m, int r);
+void create_workers(char *path, int m, int r);
 
 /**
  * Creates m map workers ready for use.

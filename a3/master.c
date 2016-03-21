@@ -11,6 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "utils.h"
+#include "mapreduce.h"
+#include "hash.h"
+#include "mapper.h"
+#include "lister.h"
 #include "master.h"
 
 /**
@@ -107,7 +112,7 @@ void process_files(char *path, int m, int *in_pipes, int *out_pipes,
  * @param  r [description]
  * @return   [description]
  */
-create_workers(char *path, int m, int r){
+void create_workers(char *path, int m, int r){
     int reduce_pipes[r];
 
     // Fork indicator

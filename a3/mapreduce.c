@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "utils.h"
+#include "master.h"
 #include "mapreduce.h"
 
 /**
