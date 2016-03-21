@@ -46,7 +46,7 @@ size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
  */
 void safe_write(int fildes, const void *buf, size_t nbyte);
 
-/** 
+/**
  * Prints to stderr conveniently in a varadic fashion.
  *
  * @param msg       message to print.
@@ -85,7 +85,7 @@ void safe_close(int file_descriptor);
 /**
  * Replaces one file descriptor with another.
  */
-void safe_dup2(int oldfd, int newfd);
+int safe_dup2(int oldfd, int newfd);
 
 /**
  * Creates a new child process.

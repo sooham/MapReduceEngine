@@ -13,6 +13,7 @@
 
 #include "mapreduce.h"
 #include "utils.h"
+#include "master.h"
 
 /**
  * Read the command line arguments and set MapReduce logistics
