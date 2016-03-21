@@ -35,18 +35,18 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
     // Send to map workers uniformly
     while (scanf("%s", filename) != EOF){
         // Send to worker
-        write(
+        safe_write(
             to_mapper_pipes[current_worker],
             dirname,
             strlen(dirname) * sizeof(char)
         );
 
-        write(
+        safe_write(
             to_mapper_pipes[current_worker],
             filename,
             strlen(filename) * sizeof(char)
         );
-        write(to_mapper_pipes[current_worker], "\0", sizeof(char));
+        safe_write(to_mapper_pipes[current_worker], "\0", sizeof(char));
 
         // Distribute uniformly
         current_worker = ++current_worker % m;
@@ -61,7 +61,7 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
     int max_pipe = 0;
 
     for (int i = 0; i < m; i++) {
-        close(to_mapper_pipes[i]);
+        safe_close(to_mapper_pipes[i]);
 
         // listen to in pipes
         FD_SET(from_mapper_pipes[i], &from_mapper_set);
@@ -83,15 +83,13 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
         for (int i = 0; i < m; i++) {
             if (FD_ISSET(from_mapper_pipes[i], &from_mapper_set)) {
                 // Read from pipe
-                int read_result = read(from_mapper_pipes[i], &read_pair, sizeof(Pair));
+                int read_result = safe_read(from_mapper_pipes[i], &read_pair, sizeof(Pair));
                 if (read_result == 0) {
                     closed_pipes++;
-                } else if (read_result < 0) {
-                    printf("Master: Error reading map, %d", errno);
                 } else {
                     // Process <key, value> (i.e. send to reduce worker).
                     int reduce_id = juanhash(read_pair.key) % r;
-                    write(reduce_pipes[reduce_id], &read_pair, sizeof(Pair));
+                    safe_write(reduce_pipes[reduce_id], &read_pair, sizeof(Pair));
                 }
             }
         }
@@ -99,7 +97,7 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
 
     // Close reduce pipes
     for(int i = 0; i < r; i++){
-        close(reduce_pipes[i]);
+        safe_close(reduce_pipes[i]);
     }
 }
 
@@ -125,45 +123,40 @@ void create_mappers(char *dirname, int m, int r, int *reduce_pipes){
     for (int i = 0; i < m; i++) {
         // Create the master->mapper pipe
         int master_mapper_pipe[2];
-        if (pipe(master_mapper_pipe)) {
-            perror("(create_mappers) pipe(master_mapper_pipe)");
-            exit(1);
-        }
+        safe_pipe(master_mapper_pipe);
 
         // Create the mapper->master pipe
         int mapper_master_pipe[2];
-        if (pipe(mapper_master_pipe)) {
-            perror("(create_mappers) pipe(mapper_master_pipe)");
-            exit(1);
-        }
+        safe_pipe(mapper_master_pipe);
 
         // fork into map worker
-        if ((pid = fork()) == 0) {
-            // mapper
+        pid = safe_fork();
+        if (pid == 0) {
+            // mapper child
+            for(int z = 0; z < i; z++){
+                safe_close(to_mapper_pipes[z]);
+                safe_close(from_mapper_pipes[z]);
+            }
 
             // Route stdin from pipe master->mapper
-            close(master_mapper_pipe[1]);
-            dup2(master_mapper_pipe[0], STDIN_FILENO);
+            safe_close(master_mapper_pipe[1]);
+            safe_dup2(master_mapper_pipe[0], STDIN_FILENO);
 
             // Route stdout to pipe mapper->master
-            close(mapper_master_pipe[0]);
-            dup2(mapper_master_pipe[1], STDOUT_FILENO);
+            safe_close(mapper_master_pipe[0]);
+            safe_dup2(mapper_master_pipe[1], STDOUT_FILENO);
 
             // don't spawn children in for loop
             break;
-        } else if (pid > 0) {
+        } else {
             // master
             // Store master->mapper pipe
-            close(master_mapper_pipe[0]);
+            safe_close(master_mapper_pipe[0]);
             to_mapper_pipes[i] = master_mapper_pipe[1];
 
             // Store mapper->master pipe
-            close(mapper_master_pipe[1]);
+            safe_close(mapper_master_pipe[1]);
             from_mapper_pipes[i] = mapper_master_pipe[0];
-        } else {
-            // ERROR
-            perror("(create_mappers) fork()");
-            exit(1);
         }
     }
 
@@ -200,28 +193,29 @@ void create_workers(char *dirname, int m, int r) {
     for (int i = 0; i < r; i++) {
         // Create the master->reducer pipe
         int master_reducer_pipe[2];
-        if(pipe(master_reducer_pipe)) {
-            perror("(create_workers) pipe(master_reducer_pipe)");
-            exit(1);
-        }
+        safe_pipe(master_reducer_pipe);
 
         // Fork into reduce worker
-        if((pid = fork()) == 0) {
-            // reducer
+        pid = safe_fork();
+        if(pid == 0) {
+            // reduce child
+
+            // Close all other pipes 
+            for(int z = 0; z < i; z++){
+                safe_close(to_reduce_pipes[z]);
+            }
+
             // Route stdin to pipe
-            close(master_reducer_pipe[1]);
-            dup2(master_reducer_pipe[0], STDIN_FILENO);
+            safe_close(master_reducer_pipe[1]);
+            safe_dup2(master_reducer_pipe[0], STDIN_FILENO);
+
             // we are still running the for loop in the child
             break;
         } else if (pid > 0) {
             // Master
             // Store master->reducer pipe
-            close(master_reducer_pipe[0]);
+            safe_close(master_reducer_pipe[0]);
             to_reduce_pipes[i] = master_reducer_pipe[1];
-        } else {
-            // ERROR
-            perror("(create_workers) fork()");
-            exit(1);
         }
     }
     // all pipes to reducers have been fixed
@@ -251,29 +245,21 @@ void create_workers(char *dirname, int m, int r) {
 int create_master(char *dirname, int m, int r) {
     // Create the lister->master pipe
     int lister_pipe[2];
-    if(pipe(lister_pipe)){
-        perror("(create_master) pipe(lister_pipe)");
-        exit(1);
-    }
+    safe_pipe(lister_pipe);
 
     // Fork into lister worker
     // read from master stdin, write from lister stdout
-    pid_t pid;
-    if ((pid = fork()) == 0) {
+    pid_t pid = safe_fork();
+    if(pid == 0){
         // lister
-        close(lister_pipe[0]);                          // close read end
-        if (dup2(lister_pipe[1], STDOUT_FILENO)) {      // map stdout to write end
-            perror("(create_master) dup2(lister_pipe[1], STDOUT_FILENO)");
-            exit(1);
-        }
+        safe_close(lister_pipe[0]);                          // close read end
+        safe_dup2(lister_pipe[1], STDOUT_FILENO);      // map stdout to write end
+
         list(dirname);
-    } else if (pid > 0) {
+    } else {
         // master
-        close(lister_pipe[1]);                         // close write end
-        if(dup2(lister_pipe[0], STDIN_FILENO)) {       // map stdin to read end
-            perror("(create_master) dup2(lister_pipe[0], STDIN_FILENO)");
-            exit(1);
-        }
+        safe_close(lister_pipe[1]); // close write end
+        safe_dup2(lister_pipe[0], STDIN_FILENO); // map stdin to read end
 
         // TODO: wait for child here to see if directory is valid
         // (sync) or do something else, currently we do not
@@ -282,9 +268,6 @@ int create_master(char *dirname, int m, int r) {
 
         // make the map and reduce workers
         create_workers(dirname, m, r);
-    } else {
-        perror("(create_master) fork()");
-        exit(1);
     }
 
     return 0;
