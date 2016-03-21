@@ -49,7 +49,10 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
         safe_write(to_mapper_pipes[current_worker], "\0", sizeof(char));
 
         // Distribute uniformly
-        current_worker = ++current_worker % m;
+        current_worker++;
+        if(current_worker + 1 > m){
+            current_worker = 0;
+        }
     }
 
     Pair read_pair;
@@ -262,7 +265,7 @@ int create_master(char *dirname, int m, int r) {
         safe_dup2(lister_pipe[0], STDIN_FILENO); // map stdin to read end
 
         // TODO: wait for child here to see if directory is valid
-        // (sync) or do something else, currently we do not
+        // (sync) or do something else, currently we do not1
         // do shit if the dir is invalid
         // TODO: when to close the pipe? can we close dup2ed pipes?
 

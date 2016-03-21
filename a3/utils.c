@@ -18,10 +18,10 @@
  *             The first argument should be the file name.
  */
 void safe_execvp(const char *file, char *const argv[]){
-	if(execvp(file, argv) < 0){
-		safe_fprintf(stderr, "Error executing %s\n", file);
-		exit(1);
-	}
+    if(execvp(file, argv) < 0){
+        safe_fprintf(stderr, "Error executing %s\n", file);
+        exit(1);
+    }
 }
 
 /**
@@ -32,13 +32,13 @@ void safe_execvp(const char *file, char *const argv[]){
  * @return              The bytes read.
  */
 ssize_t safe_read(int fildes, void *buf, size_t nbyte){
-	ssize_t result = read(fildes, buf, nbyte);
-	if(result < 0){
-		safe_fprintf(stderr, "Error reading from a file descriptor.\n");
-		exit(1);
-	}
+    ssize_t result = read(fildes, buf, nbyte);
+    if(result < 0){
+        safe_fprintf(stderr, "Error reading from a file descriptor.\n");
+        exit(1);
+    }
 
-	return result;
+    return result;
 }
 
 /**
@@ -50,13 +50,13 @@ ssize_t safe_read(int fildes, void *buf, size_t nbyte){
  * @return                  The number of elements actually read.
  */
 size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream){
-	size_t result = fread(ptr, size, nmemb, stream);
-	if(result == 0){
-		safe_fprintf(stderr, "Error reading from file stream.\n");
-		exit(1);	
-	}
+    size_t result = fread(ptr, size, nmemb, stream);
+    if(result == 0){
+        safe_fprintf(stderr, "Error reading from file stream.\n");
+        exit(1);    
+    }
 
-	return result;
+    return result;
 }
 
 /**
@@ -66,10 +66,10 @@ size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream){
  * @param nbyte   The size of the data.
  */
 void safe_write(int fildes, const void *buf, size_t nbyte){
-	if(write(fildes, buf, nbyte) != nbyte){
-		safe_fprintf(stderr, "Error writing to %d.\n", fildes);
-		exit(1);
-	}
+    if(write(fildes, buf, nbyte) != nbyte){
+        safe_fprintf(stderr, "Error writing to %d.\n", fildes);
+        exit(1);
+    }
 }
 
 /** 
@@ -89,7 +89,7 @@ void error(char *msg, int count, ...) {
     new_msg[strlen(new_msg)]  ='\n';
 
     if(vfprintf(stderr, new_msg, vargs) < 0){
-    	safe_fprintf(stderr, "Error printing '%s' to stream.\n", new_msg);
+        safe_fprintf(stderr, "Error printing '%s' to stream.\n", new_msg);
     }
 
     va_end(vargs);
@@ -100,17 +100,17 @@ void error(char *msg, int count, ...) {
  * Same signature as fprintf.
  */
 void safe_fprintf(FILE *stream, const char *format, ...){
-	// A bit verbose for handling variable arguments
-	va_list args;
-	va_start(args, format);
+    // A bit verbose for handling variable arguments
+    va_list args;
+    va_start(args, format);
 
-	if(vfprintf(stream, format, args) < 0){
-		if(stream == stderr) exit(2); // Prevents infinite loop of errors
+    if(vfprintf(stream, format, args) < 0){
+        if(stream == stderr) exit(2); // Prevents infinite loop of errors
 
-		safe_fprintf(stderr, "Error printing '%s' to stream.\n", format);
-	}
+        safe_fprintf(stderr, "Error printing '%s' to stream.\n", format);
+    }
 
-	va_end(args);
+    va_end(args);
 }
 
 /**
@@ -120,13 +120,13 @@ void safe_fprintf(FILE *stream, const char *format, ...){
  * @return      A file descriptor, assuming the procedure worked.
  */
 FILE* safe_fopen(const char *path, const char *mode){
-	FILE *result;
-	result = fopen(path, mode);
-	if(result == NULL){
-		safe_fprintf(stderr, "Error opening file '%s', with mode '%d'\n", path, mode);
-		exit(1);
-	}
-	return result;
+    FILE *result;
+    result = fopen(path, mode);
+    if(result == NULL){
+        safe_fprintf(stderr, "Error opening file '%s', with mode '%d'\n", path, mode);
+        exit(1);
+    }
+    return result;
 }
 
 
@@ -135,10 +135,10 @@ FILE* safe_fopen(const char *path, const char *mode){
  * @param stream  The stream to be closed.
  */
 void safe_fclose(FILE *stream){
-	if(fclose(stream) != 0){
-		safe_fprintf(stderr, "Error closing a stream\n");
-		exit(1);
-	}
+    if(fclose(stream) != 0){
+        safe_fprintf(stderr, "Error closing a stream\n");
+        exit(1);
+    }
 }
 
 /**
@@ -146,20 +146,20 @@ void safe_fclose(FILE *stream){
  * @param file_descriptor the descriptor to be closed.
  */
 void safe_close(int file_descriptor){
-	if(close(file_descriptor) < 0){
-		safe_fprintf(stderr, "Error closing file descriptor %d\n", file_descriptor);
-		exit(1);
-	}
+    if(close(file_descriptor) < 0){
+        safe_fprintf(stderr, "Error closing file descriptor %d\n", file_descriptor);
+        exit(1);
+    }
 }
 
 /**
  * Replaces one file descriptor with another.
  */
 void safe_dup2(int oldfd, int newfd){
-	if(dup2(oldfd, newfd) < 0){
-		safe_fprintf(stderr, "Error replacing descriptor %d with %d.\n", oldfd, newfd);
-		exit(1);
-	}
+    if(dup2(oldfd, newfd) < 0){
+        safe_fprintf(stderr, "Error replacing descriptor %d with %d.\n", oldfd, newfd);
+        exit(1);
+    }
 }
 
 /**
@@ -167,21 +167,21 @@ void safe_dup2(int oldfd, int newfd){
  * @return 0 for the child, the pid of the child for the parent.
  */
 pid_t safe_fork(){
-	pid_t result = fork();
-	if(result < 0){
-		safe_fprintf(stderr, "Error forking.\n");
-		exit(1);
-	}
+    pid_t result = fork();
+    if(result < 0){
+        safe_fprintf(stderr, "Error forking.\n");
+        exit(1);
+    }
 
-	return result;
+    return result;
 }
 
 /**
  * Creates a new pipe.
  */
 void safe_pipe(int filedes[2]){
-	if(pipe(filedes) != 0){
-		safe_fprintf(stderr, "Error piping.\n");
-		exit(1);
-	}
+    if(pipe(filedes) != 0){
+        safe_fprintf(stderr, "Error piping.\n");
+        exit(1);
+    }
 }
