@@ -1,8 +1,8 @@
 #ifndef MASTER_H
 #define MASTER_H
 
-void process_files(char *path, int m, int *in_pipes, int *out_pipes,
-        int r, int *reduce_pipes);
+void process_files(char *path, int m, int r, int *in_pipes, int *out_pipes,
+         int *reduce_pipes);
 
 
 /**
