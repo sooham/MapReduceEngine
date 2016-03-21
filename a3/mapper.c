@@ -12,6 +12,10 @@
 #include <string.h>
 #include <errno.h>
 
+#include "mapreduce.h"
+#include "utils.h"
+
+
 /**
  * Process a given file as a map worker.
  * @param path The path to the file.

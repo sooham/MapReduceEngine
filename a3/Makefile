@@ -11,7 +11,7 @@ CFLAGS = -Wall -Werror -std=c99 -c $(DEBUG)
 LFLAGS = -Wall -Werror -std=c99 $(DEBUG)
 
 # object files
-OBJS = mapreduce.o hash.o linkedlist.o lister.o mapper.o master.o reducer.o
+OBJS = mapreduce.o utils.o hash.o linkedlist.o lister.o mapper.o master.o reducer.o
 
 
 default: $(OBJS) word_freq.o
@@ -19,6 +19,9 @@ default: $(OBJS) word_freq.o
 
 mapreduce.o: mapreduce.c mapreduce.h
 	$(CC) $(CFLAGS) mapreduce.c
+
+utils.o: utils.c utils.h
+	$(CC) $(CFLAGS) utils.c
 
 hash.o: hash.c hash.h
 	$(CC) $(CFLAGS) hash.c
