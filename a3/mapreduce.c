@@ -2,6 +2,8 @@
  * Mapreduce parses input command line arguments and runs MapReduce
  */
 
+// TODO: dynamically alloc the dirname
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -11,9 +13,29 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "utils.h"
-#include "master.h"
 #include "mapreduce.h"
+
+/* Prints to stderr conveniently in a varadic fashion.
+ *
+ * @param msg       message to print.
+ * @param count     total number of optional arguments provided.
+ * @param ...       optional arugments
+ */
+// TODO: are we allowed to change the mapreduce header file
+// or put in utils juan is working on
+// if yes, put function prototype in there
+void error(char *msg, int count, ...) {
+    va_list vargs;
+    va_start(vargs, count);
+
+    char new_msg[strlen(msg) + 2];
+    strncpy(new_msg, msg, sizeof(new_msg));
+    new_msg[strlen(new_msg) + 1] = '\0';
+    new_msg[strlen(new_msg)]  ='\n';
+
+    vfprintf(stderr, new_msg, vargs);
+    va_end(vargs);
+}
 
 /**
  * Read the command line argumentss and set MapReduce logistics
@@ -22,8 +44,7 @@
  *
  * @param argc      command line argument count
  * @param argv      command line argument vector
- *
- * do not assume dirname ends with a slash TODO: did I assume this?
+ * @return          MapReduceLogistics contains processed inputs
  */
 
 MapReduceLogistics process(int argc, char *const *argv) {
@@ -53,7 +74,7 @@ MapReduceLogistics process(int argc, char *const *argv) {
                 if (strlen(optarg) >= MAX_FILENAME) throw_error = 1;
                 strncpy(res.dirname, optarg, sizeof(res.dirname));
                 res.dirname[sizeof(res.dirname) - 1] = '\0';
-                // TODO: concatenating end of file '/' done in list worker
+                // concatenating end of file '/' done in list worker
                 break;
             default:
                 throw_error = 1;
