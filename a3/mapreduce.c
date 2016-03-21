@@ -14,26 +14,6 @@
 #include "mapreduce.h"
 #include "utils.h"
 
-// TODO: move to utils
-/* Prints to stderr conveniently in a varadic fashion.
- *
- * @param msg       message to print.
- * @param count     total number of optional arguments provided.
- * @param ...       optional arugments
- */
-void error(char *msg, int count, ...) {
-    va_list vargs;
-    va_start(vargs, count);
-
-    char new_msg[strlen(msg) + 2];
-    strncpy(new_msg, msg, sizeof(new_msg));
-    new_msg[strlen(new_msg) + 1] = '\0';
-    new_msg[strlen(new_msg)]  ='\n';
-
-    vfprintf(stderr, new_msg, vargs);
-    va_end(vargs);
-}
-
 /**
  * Read the command line arguments and set MapReduce logistics
  * appropriately.
@@ -41,6 +21,7 @@ void error(char *msg, int count, ...) {
  *
  * @param argc      command line argument count
  * @param argv      command line argument vector
+ * @exit            if incorrect type of arguments passed
  * @return          MapReduceLogistics contains processed inputs
  */
 
@@ -96,7 +77,9 @@ MapReduceLogistics process(int argc, char *const *argv) {
     return res;
 }
 
-int main(int argc, char *argv[]){
+/*
+ * Main function to run MapReduce */
+int main(int argc, char *argv[]) {
     MapReduceLogistics out = process(argc, argv);
     create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
     // TODO: free the dynamic memory allocated in out

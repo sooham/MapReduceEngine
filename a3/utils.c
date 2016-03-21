@@ -53,7 +53,7 @@ size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream){
     size_t result = fread(ptr, size, nmemb, stream);
     if(result == 0){
         safe_fprintf(stderr, "Error reading from file stream.\n");
-        exit(1);    
+        exit(1);
     }
 
     return result;
@@ -72,7 +72,7 @@ void safe_write(int fildes, const void *buf, size_t nbyte){
     }
 }
 
-/** 
+/**
  * Prints to stderr conveniently in a varadic fashion.
  *
  * @param msg       message to print.
@@ -146,7 +146,7 @@ void safe_fclose(FILE *stream){
  * @param file_descriptor the descriptor to be closed.
  */
 void safe_close(int file_descriptor){
-    if(close(file_descriptor) < 0){
+    if(close(file_descriptor) != 0){
         safe_fprintf(stderr, "Error closing file descriptor %d\n", file_descriptor);
         exit(1);
     }
@@ -155,11 +155,13 @@ void safe_close(int file_descriptor){
 /**
  * Replaces one file descriptor with another.
  */
-void safe_dup2(int oldfd, int newfd){
-    if(dup2(oldfd, newfd) < 0){
+int safe_dup2(int oldfd, int newfd) {
+    int fd = dup2(oldfd, newfd);
+    if (fd == -1) {
         safe_fprintf(stderr, "Error replacing descriptor %d with %d.\n", oldfd, newfd);
         exit(1);
     }
+    return fd;
 }
 
 /**
@@ -168,7 +170,7 @@ void safe_dup2(int oldfd, int newfd){
  */
 pid_t safe_fork(){
     pid_t result = fork();
-    if(result < 0){
+    if (result == -1) {
         safe_fprintf(stderr, "Error forking.\n");
         exit(1);
     }
@@ -179,8 +181,8 @@ pid_t safe_fork(){
 /**
  * Creates a new pipe.
  */
-void safe_pipe(int filedes[2]){
-    if(pipe(filedes) != 0){
+void safe_pipe(int *fd){
+    if(pipe(fd) != 0){
         safe_fprintf(stderr, "Error piping.\n");
         exit(1);
     }

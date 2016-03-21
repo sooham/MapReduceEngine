@@ -3,12 +3,8 @@
 */
 
 #include <stdio.h>
-//#include <stdlib.h>
-#include <string.h>
-//#include <unistd.h>
-#include "utils.h"
 
-#include "mapreduce.h"
+#include "utils.h"
 
 /*
  * Reads the filename of all files in a directory,
@@ -20,6 +16,7 @@
 void list(char *dirname) {
     char *args[] = {"ls", dirname, NULL};
     safe_execvp("ls", args);
+    // TODO: Used safe_execvp do we need error checking below?
 
     // should not return
     perror("(list) execvp(\"ls\", args)");

@@ -7,7 +7,7 @@
 
 
 /*
- * Precondition: value is null-terminated.
+ * Precondition: chunk is null-terminated.
  *
  * Write a sequence of Pairs to outfd, where the first element of the
  * pair is a word in the string, and the second element is 1.
@@ -15,6 +15,8 @@
  * Note: the algorithm to remove spaces and punctuation will let the
  * empty string sneak through if a punctuation mark is surrounded by
  * white space.  It doesn't affect the results, so you don't need to fix it.
+ *
+ * [Updated March 16]
  */
 void map(const char *chunk, int outfd) {
     Pair pair = {"", "1"};
@@ -22,7 +24,7 @@ void map(const char *chunk, int outfd) {
     const char *cptr = chunk;
 
     // Get rid of any initial whitespace
-    while (!isspace(*cptr)) {
+    while (*cptr != '\0' && isspace(*cptr)) {
         cptr++;
     }
 
@@ -50,12 +52,20 @@ void map(const char *chunk, int outfd) {
             index++;
         }
     }
+
+    // write the last word
+    pair.key[index] = '\0';
+    if (index > 0) {
+        write(outfd, &pair, sizeof(Pair));
+    }
 }
 
 
 /* The key is a word, and the value is a list of key/value Pairs
  * that have this key. Each value is the count of the word
  * In the simple case the pairs in list will contain all ones as values.
+ *
+ * [Updated March 16]
  */
 Pair reduce(const char *key, const LLValues *head_value) {
     const LLValues *curr = head_value;
