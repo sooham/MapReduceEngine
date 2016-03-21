@@ -3,6 +3,8 @@
  Mapper and Reducer.
 */
 
+// TODO: wait for all children to exit
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,9 +13,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "master.h"
 #include "mapreduce.h"
-#include "utils.c"
+#include "master.h"
+#include "utils.h"
 
 /**
  * Reads file names located at dirname from stdin and distributes
@@ -40,7 +42,6 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
             dirname,
             strlen(dirname) * sizeof(char)
         );
-
         safe_write(
             to_mapper_pipes[current_worker],
             filename,
@@ -50,10 +51,11 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
 
         // Distribute uniformly
         current_worker++;
-        if(current_worker + 1 > m){
+        if (current_worker > m) {
             current_worker = 0;
         }
     }
+    // all files written to mappers
 
     Pair read_pair;
 
@@ -68,7 +70,7 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
 
         // listen to in pipes
         FD_SET(from_mapper_pipes[i], &from_mapper_set);
-        if(max_pipe < from_mapper_pipes[i]){
+        if (max_pipe < from_mapper_pipes[i]) {
             max_pipe = from_mapper_pipes[i];
         }
     }
@@ -81,26 +83,37 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
     // is not a perfect hash (it was built by us so it's
     // probably not too good), it performs relatively well.
     while (closed_pipes < m) {
-        select(max_pipe + 1, &from_mapper_set, NULL, NULL, NULL);
-        // Process ready pipes
-        for (int i = 0; i < m; i++) {
-            if (FD_ISSET(from_mapper_pipes[i], &from_mapper_set)) {
-                // Read from pipe
-                int read_result = safe_read(from_mapper_pipes[i], &read_pair, sizeof(Pair));
-                if (read_result == 0) {
-                    closed_pipes++;
-                } else {
-                    // Process <key, value> (i.e. send to reduce worker).
-                    int reduce_id = juanhash(read_pair.key) % r;
-                    safe_write(reduce_pipes[reduce_id], &read_pair, sizeof(Pair));
+        int nready_fds = select(max_pipe + 1, &from_mapper_set, NULL, NULL, NULL);
+        if (nready_fds == -1) {
+            // Error
+            perror("select");       // TODO better function handling, safe select
+        }
+        if (nready_fds > 0) {
+            // Process ready pipes
+            for (int i = 0; i < m; i++) {
+                if (FD_ISSET(from_mapper_pipes[i], &from_mapper_set)) {
+                    // Read from pipe
+                    int read_result = safe_read(from_mapper_pipes[i], &read_pair, sizeof(Pair));
+                    if (read_result == 0) {
+                        closed_pipes++;
+                    } else {
+                        // Process <key, value> (i.e. send to reduce worker).
+                        int reduce_id = juanhash(read_pair.key) % r;
+                        safe_write(reduce_pipes[reduce_id], &read_pair, sizeof(Pair));
+                    }
                 }
             }
         }
     }
 
     // Close reduce pipes
-    for(int i = 0; i < r; i++){
+    for (int i = 0; i < r; i++) {
         safe_close(reduce_pipes[i]);
+    }
+
+    // wait for all children of master process to terminate
+    // TODO: confirm correctness
+    while(wait(NULL) > 0) {
     }
 }
 
@@ -136,18 +149,25 @@ void create_mappers(char *dirname, int m, int r, int *reduce_pipes){
         pid = safe_fork();
         if (pid == 0) {
             // mapper child
-            for(int z = 0; z < i; z++){
-                safe_close(to_mapper_pipes[z]);
-                safe_close(from_mapper_pipes[z]);
+            for (int j = 0; j < i; j++) {
+                safe_close(to_mapper_pipes[j]);
+                safe_close(from_mapper_pipes[j]);
+            }
+
+            // close all the pipes to reducers in mapper child process
+            for (int j = 0; j < r; j++) {
+                safe_close(reduce_pipes[j]);
             }
 
             // Route stdin from pipe master->mapper
             safe_close(master_mapper_pipe[1]);
             safe_dup2(master_mapper_pipe[0], STDIN_FILENO);
+            safe_close(master_mapper_pipe[0]);
 
             // Route stdout to pipe mapper->master
             safe_close(mapper_master_pipe[0]);
             safe_dup2(mapper_master_pipe[1], STDOUT_FILENO);
+            safe_close(mapper_master_pipe[1]);
 
             // don't spawn children in for loop
             break;
@@ -200,10 +220,10 @@ void create_workers(char *dirname, int m, int r) {
 
         // Fork into reduce worker
         pid = safe_fork();
-        if(pid == 0) {
-            // reduce child
+        if (pid == 0) {
+            // reducer
 
-            // Close all other pipes 
+            // Close all other pipes
             for(int z = 0; z < i; z++){
                 safe_close(to_reduce_pipes[z]);
             }
@@ -211,6 +231,7 @@ void create_workers(char *dirname, int m, int r) {
             // Route stdin to pipe
             safe_close(master_reducer_pipe[1]);
             safe_dup2(master_reducer_pipe[0], STDIN_FILENO);
+            safe_close(master_reducer_pipe[0]);
 
             // we are still running the for loop in the child
             break;
@@ -226,6 +247,7 @@ void create_workers(char *dirname, int m, int r) {
     if (pid == 0) {
         // reducer, continuing after breaking from for loop
         // reduce reads key value pairs from stdin
+        reduce_process_pairs();
 
     } else {
         // master
@@ -243,6 +265,7 @@ void create_workers(char *dirname, int m, int r) {
  * @param  dirname      directory containing the input files.
  * @param  m            number of map children.
  * @param  r            number of reduce children.
+ * @exit                if system calling functions fail
  * @return              zero on success, and a non-zero value on error.
  */
 int create_master(char *dirname, int m, int r) {
@@ -251,21 +274,23 @@ int create_master(char *dirname, int m, int r) {
     safe_pipe(lister_pipe);
 
     // Fork into lister worker
-    // read from master stdin, write from lister stdout
+    // Communication: master reads stdin, lister writes to stdout
     pid_t pid = safe_fork();
-    if(pid == 0){
+    if (pid == 0) {
         // lister
-        safe_close(lister_pipe[0]);                          // close read end
+        safe_close(lister_pipe[0]);                    // close read end
         safe_dup2(lister_pipe[1], STDOUT_FILENO);      // map stdout to write end
+        safe_close(lister_pipe[1]);                    // we don't need this anymore
 
         list(dirname);
     } else {
         // master
-        safe_close(lister_pipe[1]); // close write end
-        safe_dup2(lister_pipe[0], STDIN_FILENO); // map stdin to read end
+        safe_close(lister_pipe[1]);                 // close write end
+        safe_dup2(lister_pipe[0], STDIN_FILENO);    // map stdin to read end
+        safe_close(lister_pipe[0]);                 // we don't need this anymore
 
         // TODO: wait for child here to see if directory is valid
-        // (sync) or do something else, currently we do not1
+        // (sync) or do something else, currently we do not
         // do shit if the dir is invalid
 
         // make the map and reduce workers
