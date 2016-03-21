@@ -4,6 +4,6 @@
 /*
  *
  */
-void walk_directory(char *dirname);
+void list(char *dirname);
 
 #endif
