@@ -267,7 +267,6 @@ int create_master(char *dirname, int m, int r) {
         // TODO: wait for child here to see if directory is valid
         // (sync) or do something else, currently we do not1
         // do shit if the dir is invalid
-        // TODO: when to close the pipe? can we close dup2ed pipes?
 
         // make the map and reduce workers
         create_workers(dirname, m, r);
