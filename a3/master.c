@@ -3,8 +3,6 @@
  Mapper and Reducer.
 */
 
-// TODO: Add '/' here
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +13,7 @@
 
 #include "master.h"
 #include "mapreduce.h"
+#include "utils.c"
 
 /**
  * Reads file names located at dirname from stdin and distributes
@@ -44,12 +43,6 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
 
         write(
             to_mapper_pipes[current_worker],
-            "/",
-            sizeof(char)
-        );                      // TODO: not sure
-
-        write(
-            to_mapper_pipes[current_worker],
             filename,
             strlen(filename) * sizeof(char)
         );
@@ -61,8 +54,8 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
 
     Pair read_pair;
 
-    fd_set in_pipes_set;
-    FD_ZERO(&in_pipes_set);
+    fd_set from_mapper_set;
+    FD_ZERO(&from_mapper_set);
 
     int closed_pipes = 0;
     int max_pipe = 0;
@@ -71,9 +64,9 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
         close(to_mapper_pipes[i]);
 
         // listen to in pipes
-        FD_SET(in_pipes[i], &in_pipes_set);
-        if(max_pipe < in_pipes[i]){
-            max_pipe = in_pipes[i];
+        FD_SET(from_mapper_pipes[i], &from_mapper_set);
+        if(max_pipe < from_mapper_pipes[i]){
+            max_pipe = from_mapper_pipes[i];
         }
     }
 
@@ -85,12 +78,12 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
     // is not a perfect hash (it was built by us so it's
     // probably not too good), it performs relatively well.
     while (closed_pipes < m) {
-        select(max_pipe + 1, &in_pipes_set, NULL, NULL, NULL);
+        select(max_pipe + 1, &from_mapper_set, NULL, NULL, NULL);
         // Process ready pipes
         for (int i = 0; i < m; i++) {
-            if (FD_ISSET(in_pipes[i], &in_pipes_set)) {
+            if (FD_ISSET(from_mapper_pipes[i], &from_mapper_set)) {
                 // Read from pipe
-                int read_result = read(in_pipes[i], &read_pair, sizeof(Pair));
+                int read_result = read(from_mapper_pipes[i], &read_pair, sizeof(Pair));
                 if (read_result == 0) {
                     closed_pipes++;
                 } else if (read_result < 0) {
@@ -235,8 +228,7 @@ void create_workers(char *dirname, int m, int r) {
 
     if (pid == 0) {
         // reducer, continuing after breaking from for loop
-        // Break from child
-        // do reduce stuff
+        // reduce reads key value pairs from stdin
 
     } else {
         // master
@@ -249,7 +241,6 @@ void create_workers(char *dirname, int m, int r) {
 
 /**
  * Creates a master worker that spawns m map children
-<<<<<<< .mine
  * and r reduce children, initiating MapReduce.
  *
  * @param  dirname      directory containing the input files.
@@ -287,7 +278,9 @@ int create_master(char *dirname, int m, int r) {
         // TODO: wait for child here to see if directory is valid
         // (sync) or do something else, currently we do not
         // do shit if the dir is invalid
-        // when to close the pipe?
+        // TODO: when to close the pipe? can we close dup2ed pipes?
+
+        // make the map and reduce workers
         create_workers(dirname, m, r);
     } else {
         perror("(create_master) fork()");
