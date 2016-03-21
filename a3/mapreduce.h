@@ -39,7 +39,7 @@ typedef struct keyValues {
 typedef struct mapReduceLogistics {
     int nmapworkers;
     int nreduceworkers;
-    char dirname[MAX_FILENAME];
+    char *dirname;
 } MapReduceLogistics;
 
 /*
