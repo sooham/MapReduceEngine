@@ -46,16 +46,17 @@ word_freq.o: word_freq.c
 
 # dummy flag used for providing a specified map reduce function source file
 # as command line arguments to make
-# Usage: make specific FILE=filename (without .c extension)
+# Usage: "make specific FILE=filename" (without .c extension)
 specific: $(OBJS) $(FILE).o
 	$(CC) $(LFLAGS) $(OBJS) $(FILE).o -o mapreduce
 
 $(FILE).o : $(FILE).c
 	$(CC) $(CFLAGS) $(FILE).c
 
-# dummy cleaning flag
+# to clean .out files
 clout:
 	rm -f *.out
 
+# dummy cleaning flag
 clean: clout
 	rm -rf *.o mapreduce *.swp *.dSYM
