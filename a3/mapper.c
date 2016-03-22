@@ -4,13 +4,8 @@
  using the currently defined map() function.
 */
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <limits.h>
 
 #include "mapreduce.h"
@@ -48,7 +43,7 @@ void map_digest_files(){
     // note: PATH_MAX is an OS defined macro
     char file_path[PATH_MAX];
 
-    while (scanf("%s", file_path) > 0) {
+    while(scanf("%s", file_path) > 0) {
         map_digest_file(file_path);
 
     }
