@@ -51,7 +51,7 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
             filename,
             strlen(filename) * sizeof(char)
         );
-        safe_write(to_mapper_pipes[current_worker], "\0", sizeof(char));
+        safe_write(to_mapper_pipes[current_worker], " ", sizeof(char));
 
         // Distribute uniformly
         current_worker++;

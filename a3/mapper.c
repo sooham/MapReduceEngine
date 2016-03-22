@@ -49,6 +49,7 @@ void map_digest_files(){
 
     while (scanf("%s", file_path) > 0) {
         map_digest_file(file_path);
+
     }
 
     exit(0);
