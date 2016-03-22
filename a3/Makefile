@@ -54,5 +54,8 @@ $(FILE).o : $(FILE).c
 	$(CC) $(CFLAGS) $(FILE).c
 
 # dummy cleaning flag
-clean:
-	rm -rf *.o mapreduce *.swp *.dSYM .\#mapreduce.c
+clout:
+	rm -f *.out
+
+clean: clout
+	rm -rf *.o mapreduce *.swp *.dSYM
