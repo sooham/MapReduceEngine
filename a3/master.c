@@ -55,7 +55,7 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
 
         // Distribute uniformly
         current_worker++;
-        if (current_worker > m) {
+        if(current_worker + 1 > m) {
             current_worker = 0;
         }
     }
@@ -166,12 +166,10 @@ void create_mappers(char *dirname, int m, int r, int *reduce_pipes){
             // Route stdin from pipe master->mapper
             safe_close(master_mapper_pipe[1]);
             safe_dup2(master_mapper_pipe[0], STDIN_FILENO);
-            safe_close(master_mapper_pipe[0]);
 
             // Route stdout to pipe mapper->master
             safe_close(mapper_master_pipe[0]);
             safe_dup2(mapper_master_pipe[1], STDOUT_FILENO);
-            safe_close(mapper_master_pipe[1]);
 
             // don't spawn children in for loop
             break;

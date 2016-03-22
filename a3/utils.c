@@ -68,6 +68,55 @@ size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream){
 void safe_write(int fildes, const void *buf, size_t nbyte){
     if(write(fildes, buf, nbyte) != nbyte){
         safe_fprintf(stderr, "Error writing to %d.\n", fildes);
+        switch(errno){
+            case EAGAIN:
+            // case EWOULDBLOCK:
+                safe_fprintf(stderr, "Making a bloking write to a nonblocking fd.\n");
+                break;
+            case EBADF:
+                safe_fprintf(stderr, "Invalid fd, or not open for writing.\n");
+                break;
+            case EDQUOT:
+                safe_fprintf(stderr, "Quota of disk blocks on file system exhausted.\n");
+                break;
+            case EFAULT:
+                safe_fprintf(stderr, "Seg fault, buffer is outside accessible address space.\n");
+                break;
+            case EFBIG:
+                safe_fprintf(stderr, "Maximum file size exceeded.\n");
+                break;
+            case EINTR:
+                safe_fprintf(stderr, "Call interrupted by signal.\n");
+                break;
+            case EINVAL:
+                safe_fprintf(stderr, "Fd unsuitable for writing.\n");
+                break;
+            case EIO:
+                safe_fprintf(stderr, "A low-level I/O error occurred.\n");
+                break;
+            case ENOSPC: 
+                safe_fprintf(stderr, "The device containing the file referred to by fd has no room for the data.\n");
+                break;
+            case EPIPE:
+                safe_fprintf(stderr, "The reading end of this pipe has been closed.\n");
+                break;
+            default:
+                safe_fprintf(stderr, "An unknown error occurred.\n");
+        }
+        exit(1);
+    }
+}
+
+/**
+ * Writes binary data into a file stream.
+ * @param ptr    A pointer to the data to be written.
+ * @param size   The size of a single element to be written.
+ * @param nmemb  The number of elements to be written.
+ * @param stream The stream to write to.
+ */
+void safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream){
+    if(fwrite(ptr, size, nmemb, stream) != nmemb){
+        safe_fprintf(stderr, "Error writing to file stream.\n");
         exit(1);
     }
 }
@@ -123,7 +172,7 @@ FILE* safe_fopen(const char *path, const char *mode){
     FILE *result;
     result = fopen(path, mode);
     if(result == NULL){
-        safe_fprintf(stderr, "Error opening file '%s', with mode '%d'\n", path, mode);
+        safe_fprintf(stderr, "Error opening file '%s', with mode '%s'\n", path, mode);
         exit(1);
     }
     return result;
