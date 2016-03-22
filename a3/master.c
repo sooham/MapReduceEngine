@@ -32,7 +32,14 @@
  * @param out_pipes     array of master->mapper pipes.
  * @reduce_pipes        array of master->reducer pipes
  */
-void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_mapper_pipes, int *reduce_pipes) {
+void process_files(
+    char *dirname,
+    int m,
+    int r,
+    int *from_mapper_pipes,
+    int *to_mapper_pipes,
+    int *reduce_pipes
+){
     int current_worker = 0;
 
     char filename[MAX_FILENAME];
@@ -59,6 +66,10 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
             current_worker = 0;
         }
     }
+
+    // Done using dirname
+    free(dirname);
+    
     // all files written to mappers
 
     Pair read_pair;
@@ -200,6 +211,9 @@ void create_mappers(char *dirname, int m, int r, int *reduce_pipes){
 
     if (pid == 0) {
         // Break from child
+        // Mem free
+        free(dirname);
+
         // mapper reads the file keys from its stdin
         map_digest_files();
     } else {
@@ -246,11 +260,10 @@ void create_workers(char *dirname, int m, int r) {
             // Route stdin to pipe
             safe_close(master_reducer_pipe[1]);
             safe_dup2(master_reducer_pipe[0], STDIN_FILENO);
-            safe_close(master_reducer_pipe[0]);
 
             // we are still running the for loop in the child
             break;
-        } else if (pid > 0) {
+        } else {
             // Master
             // Store master->reducer pipe
             safe_close(master_reducer_pipe[0]);
@@ -261,6 +274,9 @@ void create_workers(char *dirname, int m, int r) {
 
     if (pid == 0) {
         // reducer, continuing after breaking from for loop
+        // Memory duct tape
+        free(dirname);
+
         // reduce reads key value pairs from stdin
         reduce_process_pairs();
 
@@ -295,14 +311,12 @@ int create_master(char *dirname, int m, int r) {
         // lister
         safe_close(lister_pipe[0]);                    // close read end
         safe_dup2(lister_pipe[1], STDOUT_FILENO);      // map stdout to write end
-        safe_close(lister_pipe[1]);                    // we don't need this anymore
 
         list(dirname);
     } else {
         // master
         safe_close(lister_pipe[1]);                 // close write end
         safe_dup2(lister_pipe[0], STDIN_FILENO);    // map stdin to read end
-        safe_close(lister_pipe[0]);                 // we don't need this anymore
 
         // TODO: wait for child here to see if directory is valid
         // (sync) or do something else, currently we do not

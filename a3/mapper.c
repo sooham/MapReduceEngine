@@ -45,7 +45,8 @@ void map_digest_file(char *dirname){
  * Process all files assigned to this map worker.
  */
 void map_digest_files(){
-    char file_path[PATH_MAX];       // note: PATH_MAX is an OS defined macro
+    // note: PATH_MAX is an OS defined macro
+    char file_path[PATH_MAX];
 
     while (scanf("%s", file_path) > 0) {
         map_digest_file(file_path);
