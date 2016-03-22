@@ -5,10 +5,7 @@
 
 // TODO: wait for all children to exit
 
-#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -69,7 +66,7 @@ void process_files(
 
     // Done using dirname
     free(dirname);
-    
+
     // all files written to mappers
 
     Pair read_pair;

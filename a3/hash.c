@@ -3,7 +3,6 @@
 // Made by Juan Camilo Osorio.
 // ~ ~ ,
 
-#include <stdlib.h>
 #include <string.h>
 
 // Some notes:
