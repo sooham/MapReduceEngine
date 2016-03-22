@@ -47,6 +47,15 @@ size_t safe_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 void safe_write(int fildes, const void *buf, size_t nbyte);
 
 /**
+ * Writes binary data into a file stream.
+ * @param ptr    A pointer to the data to be written.
+ * @param size   The size of a single element to be written.
+ * @param nmemb  The number of elements to be written.
+ * @param stream The stream to write to.
+ */
+void safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+
+/**
  * Prints to stderr conveniently in a varadic fashion.
  *
  * @param msg       message to print.
