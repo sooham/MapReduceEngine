@@ -21,7 +21,7 @@
 void reduce_process_pairs() {
     Pair read_pair;
     LLKeyValues *input_KV_list = NULL;
-    while (safe_read(STDIN_FILENO, &read_pair, sizeof(Pair))) {
+    while(safe_read(STDIN_FILENO, &read_pair, sizeof(Pair)) > 0){
         insert_into_keys(&input_KV_list, read_pair);
     }
 

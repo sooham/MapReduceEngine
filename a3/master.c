@@ -66,17 +66,13 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
     fd_set from_mapper_set;
     FD_ZERO(&from_mapper_set);
 
-    int closed_pipes = 0;
-    int max_pipe = 0;
+    int closed_pipe_count = 0;
 
     for (int i = 0; i < m; i++) {
         safe_close(to_mapper_pipes[i]);
 
         // listen to in pipes
         FD_SET(from_mapper_pipes[i], &from_mapper_set);
-        if (max_pipe < from_mapper_pipes[i]) {
-            max_pipe = from_mapper_pipes[i];
-        }
     }
 
     // Read key value Pairs from map worker
@@ -86,20 +82,23 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
     // implicit in the hash function used. While hash
     // is not a perfect hash (it was built by us so it's
     // probably not too good), it performs relatively well.
-    while (closed_pipes < m) {
-        int nready_fds = select(max_pipe + 1, &from_mapper_set, NULL, NULL, NULL);
-        if (nready_fds == -1) {
-            // Error
-            perror("select");       // TODO better function handling, safe select
-        }
+    int closed_pipes[m];
+    for(int i = 0; i < m; i++){
+        closed_pipes[i] = 0;
+    }
+    while (closed_pipe_count < m) {
+        int nready_fds = safe_select(FD_SETSIZE, &from_mapper_set, NULL, NULL, NULL);
+        
         if (nready_fds > 0) {
             // Process ready pipes
             for (int i = 0; i < m; i++) {
-                if (FD_ISSET(from_mapper_pipes[i], &from_mapper_set)) {
+                if(closed_pipes[i] == 1) continue;
+                if(FD_ISSET(from_mapper_pipes[i], &from_mapper_set)) {
                     // Read from pipe
                     int read_result = safe_read(from_mapper_pipes[i], &read_pair, sizeof(Pair));
-                    if (read_result == 0) {
-                        closed_pipes++;
+                    if (read_result <= 0) {
+                        closed_pipes[i] = 1;
+                        closed_pipe_count++;
                     } else {
                         // Process <key, value> (i.e. send to reduce worker).
                         int reduce_id = juanhash(read_pair.key) % r;
@@ -107,7 +106,21 @@ void process_files(char *dirname, int m, int r, int *from_mapper_pipes, int *to_
                     }
                 }
             }
+
+            FD_ZERO(&from_mapper_set);
+            for (int z = 0; z < m; z++) {
+                if(closed_pipes[z] == 1) continue;
+                // listen to in pipes
+                FD_SET(from_mapper_pipes[z], &from_mapper_set);
+            }
+        }else{
+            safe_fprintf(stderr, "No file descriptors available after select.\n");
         }
+    }
+
+    // Close mapper->master pipes.
+    for(int i = 0; i < m; i++){
+        safe_close(from_mapper_pipes[i]);
     }
 
     // Close reduce pipes
