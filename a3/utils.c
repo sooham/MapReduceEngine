@@ -236,3 +236,21 @@ void safe_pipe(int *fd){
         exit(1);
     }
 }
+
+/**
+ * Waits for one or more file descriptors to be ready.
+ * @param  nfds       The largest file descriptor to wait for.
+ * @param  read_fds   The read file descriptors to listen.
+ * @param  write_fds  The write file descriptors to listen.
+ * @param  except_fds The exception file descriptors to listen.
+ * @param  timeout    A maximum amount of time to wait for descriptors.
+ * @return            The number of file descriptors that are ready.
+ */
+int safe_select(int nfds, fd_set *read_fds, fd_set *write_fds, fd_set *except_fds, struct timeval *timeout){
+    int result = select(nfds, read_fds, write_fds, except_fds, timeout);
+    if(result < 0){
+        safe_fprintf(stderr, "Error with select.\n");
+        exit(1);
+    }
+    return result;
+}

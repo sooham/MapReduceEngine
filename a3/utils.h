@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 // Safe versions of system call functions
 // (Basically sys calls with error handling).
@@ -106,5 +108,16 @@ pid_t safe_fork();
  * Creates a new pipe.
  */
 void safe_pipe(int filedes[2]);
+
+/**
+ * Waits for one or more file descriptors to be ready.
+ * @param  nfds       The largest file descriptor to wait for.
+ * @param  read_fds   The read file descriptors to listen.
+ * @param  write_fds  The write file descriptors to listen.
+ * @param  except_fds The exception file descriptors to listen.
+ * @param  timeout    A maximum amount of time to wait for descriptors.
+ * @return            The number of file descriptors that are ready.
+ */
+int safe_select(int nfds, fd_set *read_fds, fd_set *write_fds, fd_set *except_fds, struct timeval *timeout);
 
 #endif
