@@ -173,7 +173,7 @@ void create_mappers() {
             // route stdin from pipe master->mapper
             safe_close(to_mapper_pipe[WRITE_END]);
             safe_dup2(to_mapper_pipe[READ_END], STDIN_FILENO);
-            
+
             // route stdout to pipe mapper->master
             safe_close(from_mapper_pipe[READ_END]);
             safe_dup2(from_mapper_pipe[WRITE_END], STDOUT_FILENO);
@@ -267,7 +267,7 @@ void create_workers(char *dirname) {
 
     if (pid == 0) {
         // reducer, continuing after breaking from for loop
-        
+
         // before reducer process, free memory
         free(master_pipes.to_reducer);
 
