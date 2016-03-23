@@ -4,6 +4,8 @@
 */
 
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "hash.h"
 #include "lister.h"

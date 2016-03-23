@@ -3,7 +3,7 @@
  * and outputs map() of <key, value> Pairs through stdout.
  */
 
-#include <limits.h>
+#include <linux/limits.h>
 
 #include "mapreduce.h"
 #include "utils.h"
