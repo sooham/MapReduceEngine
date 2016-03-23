@@ -289,7 +289,7 @@ void create_workers(char *dirname) {
         // read and write mapped Pairs
         route_mapped_pairs();
 
-        while(wait(NULL) > 0) {
+        while(wait(NULL) >= 0) {
             // waits for all children of master process to terminate
         }
 
