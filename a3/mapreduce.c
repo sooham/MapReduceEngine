@@ -1,22 +1,21 @@
 /*
- * Mapreduce parses input command line arguments and runs MapReduce
+ * Mapreduce parses input command line arguments and starts the
+ * Master process to run MapReduce.
  */
-
 #include <stdlib.h>
-#include <string.h>
 
 #include "mapreduce.h"
-#include "utils.h"
 #include "master.h"
+#include "utils.h"
 
 /**
  * Read the command line arguments and set MapReduce logistics
  * appropriately.
- * Usage format is mapreduce [-m numprocs] [-r numprocs] -d dirname.
+ * Usage format is "mapreduce [-m numprocs] [-r numprocs] -d dirname".
  *
  * @param argc      command line argument count
  * @param argv      command line argument vector
- * @exit            if incorrect type of arguments passed
+ * @exit            1 if incorrect type of arguments passed
  * @return          MapReduceLogistics contains processed inputs
  */
 
@@ -57,15 +56,24 @@ MapReduceLogistics process(int argc, char *const *argv) {
         }
     }
 
-    if (!dflag || res.nmapworkers <= 0 || res.nreduceworkers <= 0 || optind != argc) {
+    if (!dflag || res.nmapworkers <= 0 || res.nreduceworkers <= 0 ||
+     optind != argc) {
         throw_error = 1;
     }
 
     if (throw_error) {
-        error("usage: %s [-m nmapworkers] [-r nreduceworkers] -d dirname", 1, argv[0]);
-        error("\t-m nmapworkers: number of map processes (default 2)", 0);
-        error("\t-r nreduceworkers: number of reduce processes (default 2)", 0);
-        error("\t-d dirname: directory of files to map reduce", 0);
+        safe_fprintf(
+            stderr,
+            "usage: %s [-m nmapworkers] [-r nreduceworkers] -d dirname\n",
+            argv[0]);
+        safe_fprintf(stderr,
+            "\t-m nmapworkers: number of map processes (default 2)\n"
+            );
+        safe_fprintf(stderr,
+         "\t-r nreduceworkers: number of reduce processes (default 2)\n");
+        safe_fprintf(stderr,
+         "\t-d dirname: directory of files to map reduce\n");
+
         exit(1);
     }
 
@@ -73,10 +81,12 @@ MapReduceLogistics process(int argc, char *const *argv) {
 }
 
 /*
- * Main function to run MapReduce */
+ * Creates Master process and runs MapReduce.
+ */
 int main(int argc, char *argv[]) {
     MapReduceLogistics out = process(argc, argv);
     create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
-    // TODO: free the dynamic memory allocated in out
+    free(out.dirname);
     return 0;
 }
+

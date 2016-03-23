@@ -60,3 +60,4 @@ clout:
 # dummy cleaning flag
 clean: clout
 	rm -rf *.o mapreduce *.swp *.dSYM
+
