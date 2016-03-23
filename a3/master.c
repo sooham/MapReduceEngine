@@ -170,17 +170,13 @@ void create_mappers() {
         pid = safe_fork();
         if (pid == 0) {
             // mapper
-            safe_close(to_mapper_pipe[WRITE_END]);
-
             // route stdin from pipe master->mapper
+            safe_close(to_mapper_pipe[WRITE_END]);
             safe_dup2(to_mapper_pipe[READ_END], STDIN_FILENO);
-            safe_close(to_mapper_pipe[READ_END]);
-
-            safe_close(from_mapper_pipe[READ_END]);
-
+            
             // route stdout to pipe mapper->master
+            safe_close(from_mapper_pipe[READ_END]);
             safe_dup2(from_mapper_pipe[WRITE_END], STDOUT_FILENO);
-            safe_close(from_mapper_pipe[WRITE_END]);
 
             // i-1 pipes to sibling mappers exist in this child, close them
             for (int j = 0; j < i; j++) {
@@ -210,13 +206,13 @@ void create_mappers() {
 
     if (pid == 0) {
         // continuing after break from for loop
-        // mapper blocks trying to read the Pairs from its stdin
-        map_digest_files();
-
         // end of process, free malloced memory
         free(master_pipes.from_mapper);
         free(master_pipes.to_mapper);
         free(master_pipes.to_reducer);
+
+        // mapper blocks trying to read the Pairs from its stdin
+        map_digest_files();
     }
 }
 
@@ -251,7 +247,6 @@ void create_workers(char *dirname) {
 
             // change stdin to read end of pipe
             safe_dup2(to_reducer_pipe[READ_END], STDIN_FILENO);
-            safe_close(to_reducer_pipe[READ_END]);
 
             // i-1 pipes to sibling reducers exist in this child, close them
             for (int j = 0; j < i; j++) {
@@ -272,12 +267,14 @@ void create_workers(char *dirname) {
 
     if (pid == 0) {
         // reducer, continuing after breaking from for loop
+        
+        // before reducer process, free memory
+        free(master_pipes.to_reducer);
+
         // reduce blocked trying to read key value Pairs from stdin given
         // by master
         reduce_process_pairs();
 
-        // end reducer process, free memory
-        free(master_pipes.to_reducer);
 
     } else {
         // master
@@ -332,7 +329,6 @@ int create_master(char *dirname, int m, int r) {
 
         // change stdout to write end of pipe
         safe_dup2(lister_pipe[WRITE_END], STDOUT_FILENO);
-        safe_close(lister_pipe[WRITE_END]);
 
         // NOTE: there is no way to free malloced memory dirname before
         // end of process (calling execvp in list)
@@ -343,7 +339,6 @@ int create_master(char *dirname, int m, int r) {
 
         // change stdin to read end of pipe
         safe_dup2(lister_pipe[READ_END], STDIN_FILENO);
-        safe_close(lister_pipe[READ_END]);
 
         // no need to wait for lister child, program counter
         // for that process will start at fork point

@@ -4,6 +4,8 @@
  using the currently defined map() function.
 */
 
+#include <stdlib.h>
+
 #include "linkedlist.h"
 #include "utils.h"
 
@@ -31,5 +33,7 @@ void reduce_process_pairs() {
 
     safe_fclose(fout);
     free_key_values_list(input_KV_list);
+
+    exit(0);
 }
 
