@@ -8,6 +8,19 @@
 
 #include "utils.h"
 
+/*
+ * malloc with error checking.
+ *
+ * @param buffer        pointer to write memory into
+ * @param size          bytes to malloc
+ */
+void safe_malloc(void **buffer, size_t size) {
+    *buffer = malloc(size);
+    if (!(*buffer)) {
+        safe_fprintf(stderr, "Malloc failed\n");
+        exit(1);
+    }
+}
 
 /**
  * Replaces current process with a given executable,

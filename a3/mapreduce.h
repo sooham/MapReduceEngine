@@ -5,8 +5,8 @@
 #define MAX_VALUE 256    // Max size of value, including null-terminator.
 #define MAX_FILENAME 32  // Max length of input file path, including null-terminator.
 #define READSIZE 128     // Number of bytes to read per chunk of input file.
-                         // You should allocate one more byte than this number
-                         // for a final null-terminator after these bytes.
+                         //   - You should allocate one more byte than this number
+                         //     for a final null-terminator after these bytes.
 
 void map_worker(int outfd, int infd);
 void reduce_worker(int outfd, int infd);
@@ -33,6 +33,7 @@ typedef struct keyValues {
     struct keyValues *next;
 } LLKeyValues;
 
+
 /*
  * Takes a chunk of text and generates zero or more
  * Pair values, which it writes to outfd.
@@ -49,5 +50,5 @@ void map(const char *chunk, int outfd);
  */
 Pair reduce(const char *key, const LLValues *values);
 
-#endif
 
+#endif

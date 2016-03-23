@@ -145,8 +145,8 @@ void route_mapped_pairs() {
 void create_mappers() {
     int m = master_pipes.m;
     int r = master_pipes.r;
-    master_pipes.to_mapper = malloc(sizeof(int) * m);
-    master_pipes.from_mapper = malloc(sizeof(int) * m);
+    safe_malloc((void **) &(master_pipes.to_mapper), sizeof(int) * m);
+    safe_malloc((void **) &(master_pipes.from_mapper), sizeof(int) * m);
 
     // Fork indicator
     pid_t pid;
@@ -228,7 +228,7 @@ void create_mappers() {
  */
 void create_workers(char *dirname) {
     int r = master_pipes.r;
-    master_pipes.to_reducer = malloc(sizeof(int) * r);
+    safe_malloc((void **) &(master_pipes.to_reducer), sizeof(int) * r);
 
     // fork indicator
     pid_t pid;
