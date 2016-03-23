@@ -44,6 +44,8 @@ MapReduceLogistics process(int argc, char *const *argv) {
                 break;
             case 'd':
                 dflag = 1;
+                // we though MAX_FILENAME (32 bytes) was too short
+                // a length for malloc
                 safe_malloc(
                             (void **) &(res.dirname),
                             sizeof(char) * (strlen(optarg) + 2)
