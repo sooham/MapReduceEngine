@@ -42,7 +42,10 @@ MapReduceLogistics process(int argc, char *const *argv) {
                 break;
             case 'd':
                 dflag = 1;
-                res.dirname = malloc(sizeof(char) * (strlen(optarg) + 2));
+                safe_malloc(
+                            (void **) &(res.dirname),
+                            sizeof(char) * (strlen(optarg) + 2)
+                            );
                 strncpy(res.dirname, optarg, strlen(optarg) + 2);
 
                 // concatenating '/' if needed
