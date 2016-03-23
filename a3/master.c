@@ -139,6 +139,7 @@ void route_mapped_pairs() {
 /**
  * Creates m map workers ready for use.
  *
+ * @param dirname       directory containing the input files.
  * @exit                1 if error
  */
 void create_mappers() {
@@ -210,7 +211,7 @@ void create_mappers() {
         // mapper blocks trying to read the Pairs from its stdin
         map_digest_files();
 
-        // free malloced memory in child process
+        // end of process, free malloced memory
         free(master_pipes.from_mapper);
         free(master_pipes.to_mapper);
         free(master_pipes.to_reducer);
@@ -272,6 +273,8 @@ void create_workers(char *dirname) {
         // reduce blocked trying to read key value Pairs from stdin given
         // by master
         reduce_process_pairs();
+
+        // end reducer process, free memory
         free(master_pipes.to_reducer);
 
     } else {
@@ -291,7 +294,7 @@ void create_workers(char *dirname) {
             // waits for all children of master process to terminate
         }
 
-        // free malloced memory
+        // end of master process, free malloced memory
         free(master_pipes.from_mapper);
         free(master_pipes.to_mapper);
         free(master_pipes.to_reducer);
@@ -329,6 +332,8 @@ int create_master(char *dirname, int m, int r) {
         safe_dup2(lister_pipe[WRITE_END], STDOUT_FILENO);
         safe_close(lister_pipe[WRITE_END]);
 
+        // NOTE: there is no way to free malloced memory dirname before
+        // end of process (calling execvp in list)
         list(dirname);
     } else {
         // master
