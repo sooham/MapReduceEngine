@@ -3,6 +3,8 @@
  * Master process to run MapReduce.
  */
 #include <stdlib.h>
+#include <unistd.h> 
+#include <getopt.h>
 
 #include "mapreduce.h"
 #include "master.h"
