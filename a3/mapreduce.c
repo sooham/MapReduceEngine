@@ -2,9 +2,9 @@
  * Mapreduce parses input command line arguments and starts the
  * Master process to run MapReduce.
  */
-#include <stdlib.h>
-#include <unistd.h> 
 #include <getopt.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "mapreduce.h"
 #include "master.h"
@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
     MapReduceLogistics out = process(argc, argv);
     create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
     free(out.dirname);
+    fprintf(stderr, "%d is ending\n", getpid());
     return 0;
 }
 

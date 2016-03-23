@@ -210,6 +210,7 @@ void create_mappers() {
         free(master_pipes.from_mapper);
         free(master_pipes.to_mapper);
         free(master_pipes.to_reducer);
+        fprintf(stderr, "ending mapper\n");
 
         // mapper blocks trying to read the Pairs from its stdin
         map_digest_files();
@@ -242,7 +243,6 @@ void create_workers(char *dirname) {
         pid = safe_fork();
         if (pid == 0) {
             // reducer
-
             safe_close(to_reducer_pipe[WRITE_END]);
 
             // change stdin to read end of pipe
@@ -264,18 +264,15 @@ void create_workers(char *dirname) {
     }
 
     // all pipes to reducers have been connected
-
     if (pid == 0) {
         // reducer, continuing after breaking from for loop
-
         // before reducer process, free memory
         free(master_pipes.to_reducer);
+        fprintf(stderr, "ending reducer\n");
 
         // reduce blocked trying to read key value Pairs from stdin given
         // by master
         reduce_process_pairs();
-
-
     } else {
         // master
 
@@ -283,14 +280,16 @@ void create_workers(char *dirname) {
         // reducer children are blocked trying to read
         // create map workers
         create_mappers();
-        // map workers are blocked trying to read
+        // map workers are blocked trying to read files
         // Read stdin for filenames, write to map workers
         distribute_files(dirname);
         // read and write mapped Pairs
         route_mapped_pairs();
 
+        fprintf(stderr, "b4 wait\n");
         while(wait(NULL) >= 0) {
             // waits for all children of master process to terminate
+            fprintf(stderr, "in wait\n");
         }
 
         // end of master process, free malloced memory
