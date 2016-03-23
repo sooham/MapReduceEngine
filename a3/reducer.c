@@ -28,7 +28,6 @@ void reduce_process_pairs() {
     // process them
     for (LLKeyValues *cur = input_KV_list; cur != NULL; cur = cur->next) {
         Pair result = reduce(cur->key, cur->head_value);
-        fprintf(stderr, "{%s, %s}\n", result.key, result.value);
         safe_fwrite(&result, sizeof(Pair), 1, fout);
     }
 

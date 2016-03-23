@@ -94,7 +94,6 @@ int main(int argc, char *argv[]) {
     MapReduceLogistics out = process(argc, argv);
     create_master(out.dirname, out.nmapworkers, out.nreduceworkers);
     free(out.dirname);
-    fprintf(stderr, "%d is ending\n", getpid());
     return 0;
 }
 

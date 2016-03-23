@@ -287,7 +287,7 @@ void create_workers(char *dirname) {
         route_mapped_pairs();
 
         fprintf(stderr, "b4 wait\n");
-        while(wait(NULL) >= 0) {
+        while(waitpid(-1, NULL, 0) >= 0) {
             // waits for all children of master process to terminate
             fprintf(stderr, "in wait\n");
         }
