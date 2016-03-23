@@ -1,32 +1,47 @@
 #ifndef MASTER_H
 #define MASTER_H
 
-void process_files(char *path, int m, int r, int *in_pipes, int *out_pipes,
-         int *reduce_pipes);
+#define READ_END 0
+#define WRITE_END 1
 
-
-/**
- * Creates r reduce workers ready for use.
- * @param  m [description]
- * @param  r [description]
- * @return   [description]
+/*
+ * This struct holds all array of pipes / fds interfacing with master.
  */
-void create_workers(char *path, int m, int r);
+typedef struct pipe_set {
+    int m;
+    int r;
+    int *from_mapper;
+    int *to_mapper;
+    int *to_reducer;
+} PipeSet;
 
-/**
+/*
+ * Reads filenames located at dirname from stdin (sent by lister)
+ * and distributes them evenly to mappers.
+ */
+void distribute_files(char *dirname);
+
+/*
+ * Read key value Pairs from mappers and
+ * assigns by keys to reducer using hash function.
+ */
+void route_mapped_pairs();
+/*
  * Creates m map workers ready for use.
- * @param  m [description]
- * @return   [description]
  */
-void create_map_workers(char *path, int m, int r, int *reduce_pipes);
+void create_map_workers();
+
+/*
+ * Creates m mappers and r reducers ready for use.
+ */
+void create_workers(char *dirname);
+
 
 /**
  * Creates a master worker that spawns m map children
- * and r reduce children, initiating a MapReduce operation.
- * @param  path the location of the folder containing the input data files.
- * @param  m    the number of map children.
- * @param  r    the number of reduce children.
+ * and r reduce children, initiating MapReduce.
  */
-int create_master(char *path, int m, int r);
+int create_master(char *dirname, int m, int r);
 
 #endif
+

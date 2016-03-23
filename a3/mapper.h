@@ -2,10 +2,9 @@
 #define MAPPER_H
 
 /**
- * Process a given file as a map worker.
- * @param path The path to the file.
+ * Perform map() on the file chunk by chunk.
  */
-void map_digest_file(char *path);
+void map_digest_file(char *file_path);
 
 /**
  * Process all files assigned to this map worker.
@@ -13,3 +12,4 @@ void map_digest_file(char *path);
 void map_digest_files();
 
 #endif
+

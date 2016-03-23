@@ -1,11 +1,10 @@
 #ifndef HASH_H
 #define HASH_H
 
-/**
- * Returns a (hopefully) uniform hash of a given key.
- * @param  key the key to hash.
- * @return     the integer hash for the given key.
+/*
+ * Returns a hash value for a given key. Uniformly distributes keys.
  */
-unsigned int juanhash(const char *key);
+unsigned int hash(const char *key);
 
 #endif
+

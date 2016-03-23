@@ -4,11 +4,6 @@
  using the currently defined map() function.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-
 #include "linkedlist.h"
 #include "utils.h"
 
@@ -18,7 +13,7 @@
 void reduce_process_pairs() {
     Pair read_pair;
     LLKeyValues *input_KV_list = NULL;
-    while(safe_read(STDIN_FILENO, &read_pair, sizeof(Pair)) > 0){
+    while (safe_read(STDIN_FILENO, &read_pair, sizeof(Pair)) > 0) {
         insert_into_keys(&input_KV_list, read_pair);
     }
 
@@ -35,9 +30,6 @@ void reduce_process_pairs() {
     }
 
     safe_fclose(fout);
-
-
-    // TODO: free memory of linked lists
-    // free_key_values_list(key_values_list);
+    free_key_values_list(input_KV_list);
 }
 
